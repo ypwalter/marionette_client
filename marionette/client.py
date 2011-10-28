@@ -51,6 +51,7 @@ class MarionetteClient(object):
         self.sock = None
         self.traits = None
         self.applicationType = None
+        self.actor = 'root'
 
     def _recv_n_bytes(self, n):
         """ Convenience method for receiving exactly n bytes from
@@ -93,11 +94,17 @@ class MarionetteClient(object):
         self.traits = hello.get('traits')
         self.applicationType = hello.get('applicationType')
 
+        # get the marionette actor id
+        response = self.send({'to':'root', 'type': 'getMarionetteID'})
+        self.actor = response['id']
+
     def send(self, msg):
         """ Send a message on the socket, prepending it with len(msg) + ':'.
         """
         if not self.sock:
             self.connect()
+        if 'to' not in msg:
+            msg['to'] = self.actor
         data = json.dumps(msg)
         self.sock.send('%s:%s' % (len(data), data))
         response = self.receive()

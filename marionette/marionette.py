@@ -99,7 +99,6 @@ class Marionette(object):
         self.host = host
         self.port = port
         self.client = MarionetteClient(self.host, self.port)
-        self.actor = 'marionette'
         self.session = None
         self.window = None
 
@@ -107,8 +106,7 @@ class Marionette(object):
         if not self.session and command not in ('newSession', 'getStatus'):
             self.start_session()
 
-        message = { 'to': self.actor,
-                    'command': command }
+        message = { 'type': command }
         if self.session:
             message['session'] = self.session
         if kwargs:
