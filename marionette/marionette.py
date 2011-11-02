@@ -36,6 +36,7 @@
 
 from client import MarionetteClient
 from errors import *
+from emulator import Emulator
 
 class HTMLElement(object):
 
@@ -95,12 +96,22 @@ class HTMLElement(object):
 
 class Marionette(object):
 
-    def __init__(self, host='localhost', port=2626):
+    def __init__(self, host='localhost', port=2626, emulator=False):
         self.host = host
         self.port = port
-        self.client = MarionetteClient(self.host, self.port)
         self.session = None
         self.window = None
+        self.emulator = None
+
+        if emulator:
+            self.emulator = Emulator()
+            self.emulator.start()
+
+        self.client = MarionetteClient(self.host, self.port)
+
+    def __del__(self):
+        if self.emulator:
+            self.emulator.close()
 
     def _send_message(self, command, response_key, **kwargs):
         if not self.session and command not in ('newSession', 'getStatus'):
