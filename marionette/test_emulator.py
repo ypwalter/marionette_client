@@ -17,11 +17,17 @@ if __name__ == '__main__':
     assert(driver1.emulator.is_running)
     assert(driver1.emulator.port)
     print 'emulator1 is running on port', driver1.emulator.port
+    assert(driver1.port != 2626)
+    print 'emulator1 port forwarding configured from port', driver1.port
+    print 'on localhost to port 2626 on the device'
 
     driver2 = Marionette(emulator=True, port=2626)
     assert(driver2.emulator.is_running)
     assert(driver2.emulator.port)
     print 'emulator2 is running on port', driver2.emulator.port
+    assert(driver2.port != 2626)
+    print 'emulator1 port forwarding configured from port', driver2.port
+    print 'on localhost to port 2626 on the device'
 
     time.sleep(90)
 

@@ -106,6 +106,7 @@ class Marionette(object):
         if emulator:
             self.emulator = Emulator()
             self.emulator.start()
+            self.port = self.emulator.setup_port_forwarding(self.port)
 
         self.client = MarionetteClient(self.host, self.port)
 

@@ -64,7 +64,8 @@ class Emulator(object):
         adb = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         retcode = adb.wait()
         if retcode:
-            raise Exception('adb terminated with exit code %d' % retcode)
+            raise Exception('adb terminated with exit code %d: %s' 
+                            % (retcode, adb.stdout.read()))
         return adb.stdout.read()
 
     def close(self):
@@ -105,5 +106,24 @@ class Emulator(object):
             if datetime.datetime.now() - now > datetime.timedelta(seconds=60):
                 raise Exception('timed out waiting for emulator to start')
             online, offline = self._get_adb_devices()
-        self.port = list(online - original_online)[0]
+        self.port = int(list(online - original_online)[0])
+
+    def setup_port_forwarding(self, remote_port):
+        """ Setup TCP port forwarding to the specified port on the device,
+            using any availble local port, and return the local port.
+        """
+
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(("",0))
+        local_port = s.getsockname()[1]
+        s.close()
+
+        output = self._run_adb(['-s', 'emulator-%d' % self.port, 
+                                'forward',
+                                'tcp:%d' % local_port,
+                                'tcp:%d' % remote_port])
+        print output
+
+        return local_port
 
