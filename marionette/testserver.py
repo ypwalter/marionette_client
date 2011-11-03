@@ -58,6 +58,7 @@ class TestServer(object):
     # canned responses for test messages
     test_responses = {
         'newSession': { 'value': 'a65bef90b145' },
+        'getMarionetteID': { 'id': 'conn0.marionette' },
         'deleteSession': { 'ok': True },
         'setScriptTimeout': { 'ok': True },
         'setSearchTimeout': { 'ok': True },
@@ -66,6 +67,7 @@ class TestServer(object):
         'closeWindow': { 'ok': True },
         'switchToWindow': { 'ok': True },
         'switchToFrame': { 'ok': True },
+        'setContext': { 'ok': True },
         'getUrl' : { 'value': TEST_URL },
         'goUrl': { 'ok': True },
         'goBack': { 'ok': True },
@@ -164,7 +166,7 @@ class TestServer(object):
         return json.loads(response)
 
     def send(self, sock, msg):
-        msg['from'] = 'marionette'
+        print 'msg', msg
         data = json.dumps(msg)
         print 'sending %s' % data
         sock.send('%s:%s' % (len(data), data))
@@ -179,7 +181,7 @@ class TestServer(object):
                             'traits': []})
 
     def process_command(self, data):
-        command = data['command']
+        command = data['type']
 
         if command == 'use_test_responses':
             self.responses = self.test_responses
@@ -193,7 +195,7 @@ class TestServer(object):
         else:
             response = { 'error': { 'message': 'unknown command: %s' % command, 'status': 500} }
 
-        if command not in ('newSession', 'getStatus') and 'session' not in data:
+        if command not in ('newSession', 'getStatus', 'getMarionetteID') and 'session' not in data:
             response = { 'error': { 'message': 'no session specified', 'status': 500 } }
 
         return response
@@ -221,7 +223,7 @@ class TestServer(object):
                         sock.close
                         self.descriptors.remove(sock)
                     else:
-                        if 'command' in data:
+                        if 'type' in data:
                             msg = self.process_command(data)
                         else:
                             msg = 'command: %s' % json.dumps(data)

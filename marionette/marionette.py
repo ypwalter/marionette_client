@@ -96,6 +96,9 @@ class HTMLElement(object):
 
 class Marionette(object):
 
+    CONTEXT_CHROME = 'chrome'
+    CONTEXT_CONTENT = 'content'
+
     def __init__(self, host='localhost', port=2626, emulator=False):
         self.host = host
         self.port = port
@@ -200,6 +203,10 @@ class Marionette(object):
             window_id = self.get_window()
         response = self._send_message('closeWindow', 'ok', value=window_id)
         return response
+
+    def set_context(self, context):
+        assert(context == self.CONTEXT_CHROME or context == self.CONTEXT_CONTENT)
+        return self._send_message('setContext', 'ok', value=context)
 
     def switch_to_window(self, window_id):
         response = self._send_message('switchToWindow', 'ok', value=window_id)

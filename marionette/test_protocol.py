@@ -91,4 +91,5 @@ if __name__ == '__main__':
     assert(m.switch_to_frame(m.find_element(HTMLElement.ID, 'frameid')))
     assert(m.switch_to_frame())
     assert(m.get_window() == server.TEST_CURRENT_WINDOW)
+    assert(m.set_context(m.CONTEXT_CHROME))
     assert(m.delete_session())
