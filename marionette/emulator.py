@@ -1,6 +1,7 @@
 import datetime
 import os
 import re
+import socket
 import subprocess
 import time
 
@@ -12,6 +13,7 @@ class Emulator(object):
     def __init__(self, homedir=None):
         self.port = None
         self.proc = None
+        self.marionette_port = None
 
         self.homedir = homedir
         if self.homedir is None:
@@ -123,7 +125,25 @@ class Emulator(object):
                                 'forward',
                                 'tcp:%d' % local_port,
                                 'tcp:%d' % remote_port])
-        print output
+
+        self.marionette_port = local_port
 
         return local_port
+
+    def wait_for_port(self, timeout=180):
+        assert(self.marionette_port)
+        starttime = datetime.datetime.now()
+        while datetime.datetime.now() - starttime < datetime.timedelta(seconds=timeout):
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.connect(('localhost', self.marionette_port))
+                data = sock.recv(10)
+                sock.close()
+                if '"from"' in data:
+                    return True
+            except:
+                import traceback
+                print traceback.format_exc()
+            time.sleep(1)
+        return False
 

@@ -99,7 +99,7 @@ class Marionette(object):
     CONTEXT_CHROME = 'chrome'
     CONTEXT_CONTENT = 'content'
 
-    def __init__(self, host='localhost', port=2626, emulator=False):
+    def __init__(self, host='localhost', port=2929, emulator=False):
         self.host = host
         self.port = port
         self.session = None
@@ -110,6 +110,7 @@ class Marionette(object):
             self.emulator = Emulator()
             self.emulator.start()
             self.port = self.emulator.setup_port_forwarding(self.port)
+            assert(self.emulator.wait_for_port())
 
         self.client = MarionetteClient(self.host, self.port)
 
