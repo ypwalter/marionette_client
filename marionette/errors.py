@@ -42,6 +42,9 @@ class MarionetteException(Exception):
         self.status = status
         self.stacktrace = stacktrace
 
+    def __str__(self):
+        return 'error: %s\nstacktrace: %s' % (self.message, self.stacktrace)
+
 class TimeoutException(MarionetteException):
     pass
 
