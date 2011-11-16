@@ -3,7 +3,10 @@ import os
 import re
 import socket
 import subprocess
+from telnetlib import Telnet
 import time
+
+from emulator_battery import EmulatorBattery
 
 
 class Emulator(object):
@@ -12,8 +15,11 @@ class Emulator(object):
 
     def __init__(self, homedir=None):
         self.port = None
+        self._emulator_launched = False
         self.proc = None
         self.marionette_port = None
+        self.telnet = None
+        self.battery = EmulatorBattery(self)
 
         self.homedir = homedir
         if self.homedir is None:
@@ -39,6 +45,11 @@ class Emulator(object):
         self.dataImg = os.path.join(self.sysDir, 'userdata.img')
         self._check_file(self.dataImg)
 
+    def __del__(self):
+        if self.telnet:
+            self.telnet.write('exit\n')
+            self.telnet.read_all()
+
     def _check_file(self, filePath):
         if not os.access(filePath, os.F_OK):
             raise Exception(('File not found: %s; did you pass the B2G home '
@@ -59,7 +70,10 @@ class Emulator(object):
 
     @property
     def is_running(self):
-        return self.proc is not None and self.proc.poll() is None
+        if self._emulator_launched:
+            return self.proc is not None and self.proc.poll() is None
+        else:
+            return self.port is not None
 
     def _run_adb(self, args):
         args.insert(0, self.adb)
@@ -70,8 +84,27 @@ class Emulator(object):
                             % (retcode, adb.stdout.read()))
         return adb.stdout.read()
 
+    def _get_telnet_response(self, command=None):
+        output = []
+        assert(self.telnet)
+        if command is not None:
+            self.telnet.write('%s\n' % command)
+        while True:
+            line = self.telnet.read_until('\n')
+            output.append(line.rstrip())
+            if line.startswith('OK'):
+                return output
+            elif line.startswith('KO:'):
+                raise Exception ('bad telnet response: %s' % line)
+
+    def _run_telnet(self, command):
+        if not self.telnet:
+            self.telnet = Telnet('localhost', self.port)
+            self._get_telnet_response()
+        return self._get_telnet_response(command)
+
     def close(self):
-        if self.is_running:
+        if self.is_running and self._emulator_launched:
             self.proc.terminate()
             self.proc.wait()
         if self.proc:
@@ -91,7 +124,19 @@ class Emulator(object):
                 else:
                     online.add(m.group(1))
         return (online, offline)
-    
+
+    def connect(self):
+        self._run_adb(['start-server'])
+
+        online, offline = self._get_adb_devices()
+        now = datetime.datetime.now()
+        while online == set([]):
+            time.sleep(1)
+            if datetime.datetime.now() - now > datetime.timedelta(seconds=60):
+                raise Exception('timed out waiting for emulator to be available')
+            online, offline = self._get_adb_devices()
+        self.port = int(list(online)[0])
+
     def start(self):
         self._run_adb(['start-server'])
 
@@ -109,6 +154,7 @@ class Emulator(object):
                 raise Exception('timed out waiting for emulator to start')
             online, offline = self._get_adb_devices()
         self.port = int(list(online - original_online)[0])
+        self._emulator_launched = True
 
     def setup_port_forwarding(self, remote_port):
         """ Setup TCP port forwarding to the specified port on the device,
