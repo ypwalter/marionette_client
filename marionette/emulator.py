@@ -20,8 +20,9 @@ class Emulator(object):
         self.marionette_port = None
         self.telnet = None
         self.battery = EmulatorBattery(self)
-
         self.homedir = homedir
+
+    def _check_for_b2g(self):
         if self.homedir is None:
             self.homedir = os.getenv('B2G_HOME')
         if self.homedir is None:
@@ -75,6 +76,16 @@ class Emulator(object):
         else:
             return self.port is not None
 
+    def _check_for_adb(self):
+        adb = subprocess.Popen(['which', 'adb'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        retcode = adb.wait()
+        if retcode:
+            raise Exception('which terminated with exit code %d: %s' 
+                            % (retcode, adb.stdout.read()))
+        out = adb.stdout.read().strip()
+        if len(out) and out.find('/') > -1:
+            self.adb = out
+
     def _run_adb(self, args):
         args.insert(0, self.adb)
         adb = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -126,6 +137,7 @@ class Emulator(object):
         return (online, offline)
 
     def connect(self):
+        self._check_for_adb()
         self._run_adb(['start-server'])
 
         online, offline = self._get_adb_devices()
@@ -138,6 +150,7 @@ class Emulator(object):
         self.port = int(list(online)[0])
 
     def start(self):
+        self._check_for_b2g()
         self._run_adb(['start-server'])
 
         original_online, original_offline = self._get_adb_devices()
