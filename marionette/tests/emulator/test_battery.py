@@ -2,7 +2,7 @@ from marionette import Marionette, HTMLElement
 
 if __name__ == '__main__':
     # before running this test, launch Fennec in an emulator
-    qemu = Marionette(connectToRunningEmulator=True, port=2929)
+    qemu = Marionette(connectToRunningEmulator=True, port=2828)
     assert(qemu.emulator.is_running)
     assert(qemu.start_session())
     qemu.set_script_timeout(10000)

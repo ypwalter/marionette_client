@@ -99,7 +99,7 @@ class Marionette(object):
     CONTEXT_CHROME = 'chrome'
     CONTEXT_CONTENT = 'content'
 
-    def __init__(self, host='localhost', port=2929, emulator=False,
+    def __init__(self, host='localhost', port=2828, emulator=False,
                  connectToRunningEmulator=False):
         self.host = host
         self.port = port
