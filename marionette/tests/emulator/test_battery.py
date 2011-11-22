@@ -1,24 +1,21 @@
-from marionette import Marionette, HTMLElement
+from marionette import Marionette
 
-if __name__ == '__main__':
-    # before running this test, launch Fennec in an emulator
-    qemu = Marionette(connectToRunningEmulator=True, port=2828)
-    assert(qemu.emulator.is_running)
-    assert(qemu.start_session())
-    qemu.set_script_timeout(10000)
+def do_test(marionette):
+    assert(marionette.emulator.is_running)
+    marionette.set_script_timeout(10000)
 
     # verify the emulator's battery status as reported by Gecko is the same as
     # reported by the device
-    moz_level = qemu.execute_script("return navigator.mozBattery.level;")
-    assert(moz_level == qemu.emulator.battery.level)
+    moz_level = marionette.execute_script("return navigator.mozBattery.level;")
+    assert(moz_level == marionette.emulator.battery.level)
 
-    moz_charging = qemu.execute_script("return navigator.mozBattery.charging;")
-    emulator_charging = qemu.emulator.battery.charging
+    moz_charging = marionette.execute_script("return navigator.mozBattery.charging;")
+    emulator_charging = marionette.emulator.battery.charging
     assert(moz_charging == emulator_charging)
 
     # setup event listeners to be notified when the level or charging status 
     # changes
-    assert(qemu.execute_script("""
+    assert(marionette.execute_script("""
     window._levelchanged = false;
     window._chargingchanged = false;
     navigator.mozBattery.addEventListener("levelchange", function() {
@@ -35,14 +32,14 @@ if __name__ == '__main__':
         new_level = moz_level - 0.1
     else:
         new_level = moz_level + 0.1
-    qemu.emulator.battery.level = new_level
+    marionette.emulator.battery.level = new_level
 
     # XXX: do we need to wait here a bit?  this WFM...
-    moz_level = qemu.emulator.battery.level
+    moz_level = marionette.emulator.battery.level
     assert(int(new_level * 100) == int(moz_level * 100))
 
     # verify that the 'levelchange' listener was hit
-    level_changed = qemu.execute_async_script("""
+    level_changed = marionette.execute_async_script("""
     var callback = arguments[arguments.length - 1];
     function check_level_change() {
         if (window._levelchanged) {
@@ -57,12 +54,12 @@ if __name__ == '__main__':
     assert(level_changed)
 
     # set the battery charging state, and verify
-    qemu.emulator.battery.charging = not emulator_charging
-    new_emulator_charging_state = qemu.emulator.battery.charging
+    marionette.emulator.battery.charging = not emulator_charging
+    new_emulator_charging_state = marionette.emulator.battery.charging
     assert(new_emulator_charging_state == (not emulator_charging))
 
     # verify that the 'chargingchange' listener was hit
-    charging_changed = qemu.execute_async_script("""
+    charging_changed = marionette.execute_async_script("""
     var callback = arguments[arguments.length - 1];
     function check_charging_change() {
         if (window._chargingchanged) {
@@ -79,8 +76,11 @@ if __name__ == '__main__':
     # if we have set the charging state to 'off', set it back to 'on' to prevent
     # the emulator from sleeping
     if not new_emulator_charging_state:
-        qemu.emulator.battery.charging = True
+        marionette.emulator.battery.charging = True
 
-    print 'Test passed!'
 
+if __name__ == '__main__':
+    qemu = Marionette(emulator=True)
+    assert(qemu.start_session())
+    do_test(qemu)
 
