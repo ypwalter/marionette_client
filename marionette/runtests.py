@@ -1,8 +1,11 @@
 import imp
 from optparse import OptionParser
 import os
+import types
+import unittest
 
 from marionette import Marionette
+
 
 def run_test(test, marionette):
     filepath = os.path.join(os.path.dirname(__file__), test)
@@ -17,10 +20,18 @@ def run_test(test, marionette):
 
     mod_name,file_ext = os.path.splitext(os.path.split(filepath)[-1])
     test_mod = imp.load_source(mod_name, filepath)
-    if 'do_test' in dir(test_mod):
-        print 'running test', mod_name
-        test_mod.do_test(marionette)
-        print 'TEST-PASS: %s' % mod_name
+
+    testloader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    for name in dir(test_mod):
+        obj = getattr(test_mod, name)
+        if (isinstance(obj, (type, types.ClassType)) and
+            issubclass(obj, unittest.TestCase)):
+            testnames = testloader.getTestCaseNames(obj)
+            for testname in testnames:
+                suite.addTest(obj(marionette, methodName=testname))
+    if suite.countTestCases():
+        unittest.TextTestRunner(verbosity=3).run(suite)
 
 
 if __name__ == "__main__":
