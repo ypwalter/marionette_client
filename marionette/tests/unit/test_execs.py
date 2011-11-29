@@ -57,4 +57,6 @@ class TestExecute(MarionetteTestCase):
         marionette = self.marionette
         marionette.set_context("chrome")
         self.assertEqual(1, marionette.execute_script("var c = Components.classes;return 1;"))
+        marionette.set_context("content")
+
 

@@ -68,3 +68,4 @@ class TestExecute(MarionetteTestCase):
     def test_execute_permission_failure(self):
         marionette = self.marionette
         self.assertRaises(JavascriptException, marionette.execute_script, "return Components.classes;")
+
