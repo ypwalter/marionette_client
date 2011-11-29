@@ -39,7 +39,7 @@ from errors import JavascriptException, MarionetteException
 class TestExecute(MarionetteTestCase):
     def test_execute_simple(self):
         marionette = self.marionette
-        self.assertEqual(1, marionette.execute_script("return 1;")["value"])
+        self.assertEqual(1, marionette.execute_script("return 1;"))
 
     def test_check_window(self):
         marionette = self.marionette
@@ -56,4 +56,5 @@ class TestExecute(MarionetteTestCase):
     def test_execute_permission_success(self):
         marionette = self.marionette
         marionette.set_context("chrome")
-        self.assertEqual(1, marionette.execute_script("var c = Components.classes;return 1;")["value"])
+        self.assertEqual(1, marionette.execute_script("var c = Components.classes;return 1;"))
+
