@@ -100,7 +100,7 @@ class Marionette(object):
     CONTEXT_CONTENT = 'content'
 
     def __init__(self, host='localhost', port=2828, emulator=False,
-                 connectToRunningEmulator=False):
+                 connectToRunningEmulator=False, homedir=None):
         self.host = host
         self.port = port
         self.session = None
@@ -108,13 +108,13 @@ class Marionette(object):
         self.emulator = None
 
         if emulator:
-            self.emulator = Emulator()
+            self.emulator = Emulator(homedir=homedir)
             self.emulator.start()
             self.port = self.emulator.setup_port_forwarding(self.port)
             assert(self.emulator.wait_for_port())
 
         if connectToRunningEmulator:
-            self.emulator = Emulator()
+            self.emulator = Emulator(homedir=homedir)
             self.emulator.connect()
             self.port = self.emulator.setup_port_forwarding(self.port)
             assert(self.emulator.wait_for_port())

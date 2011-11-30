@@ -42,6 +42,8 @@ if __name__ == "__main__":
                       help = "launch a B2G emulator on which to run tests")
     parser.add_option('--address', dest='address', action='store',
                       help='host:port of running Gecko instance to connect to')
+    parser.add_option('--homedir', dest='homedir', action='store',
+                      help='home directory of emulator files')
     options, tests = parser.parse_args()
 
     if not tests:
@@ -51,11 +53,14 @@ if __name__ == "__main__":
     if options.address:
         host, port = options.address.split(':')
         if options.emulator:
-            m = Marionette(host=host, port=int(port), connectToRunningEmulator=True)
+            m = Marionette(host=host, port=int(port),
+                           connectToRunningEmulator=True,
+                           homedir=options.homedir)
         else:
             m = Marionette(host=host, port=int(port))
     elif options.emulator:
-        m = Marionette(emulator=True)
+        m = Marionette(emulator=True,
+                       homedir=options.homedir)
     else:
         raise Exception("must specify --address or --emulator")
 
