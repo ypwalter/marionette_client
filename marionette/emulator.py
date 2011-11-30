@@ -30,17 +30,25 @@ class Emulator(object):
 
         self.adb = os.path.join(self.homedir,
                                 'glue/gonk/out/host/linux-x86/bin/adb')
+        if not os.access(self.adb, os.F_OK):
+            self.adb = os.path.join(self.homedir, 'bin/adb')
 
         self.binary = os.path.join(self.homedir,
                                    'glue/gonk/out/host/linux-x86/bin/emulator')
+        if not os.access(self.binary, os.F_OK):
+            self.binary = os.path.join(self.homedir, 'bin/emulator')
         self._check_file(self.binary)
 
         self.kernelImg = os.path.join(self.homedir,
                                       'boot/kernel-android-qemu/arch/arm/boot/zImage')
+        if not os.access(self.kernelImg, os.F_OK):
+            self.kernelImg = os.path.join(self.homedir, 'zImage')
         self._check_file(self.kernelImg)
 
         self.sysDir = os.path.join(self.homedir, 
                                    'glue/gonk/out/target/product/generic/')
+        if not os.access(self.sysDir, os.F_OK):
+            self.sysDir = os.path.join(self.homedir, 'generic/')
         self._check_file(self.sysDir)
 
         self.dataImg = os.path.join(self.sysDir, 'userdata.img')
