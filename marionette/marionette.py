@@ -252,12 +252,16 @@ class Marionette(object):
         if script_args is None:
             script_args = []
         response = self._send_message('executeScript', 'value', value=script, args=script_args)
+        if type(response) == dict and response.has_key("ELEMENT"):
+            response = HTMLElement(self, response)
         return response
 
     def execute_async_script(self, script, script_args=None):
         if script_args is None:
             script_args = []
         response = self._send_message('executeAsyncScript', 'value', value=script, args=script_args)
+        if type(response) == dict and response.has_key("ELEMENT"):
+            response = HTMLElement(self, response)
         return response
 
     def find_element(self, method, target, id=None):
