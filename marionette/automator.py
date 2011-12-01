@@ -58,8 +58,8 @@ class B2GAutomation:
     def on_build(self, msg):
         # Found marionette build! Install it
         print "Found build %s" % msg
-        if buildurl in msg:
-            dir = self.install_build(msg["buildurl"])
+        if buildurl in msg['payload']:
+            dir = self.install_build(msg["payload"]["buildurl"])
             if dir == None:
                 self.log("Failed to return build directory")
             self.run_marionette(dir)
