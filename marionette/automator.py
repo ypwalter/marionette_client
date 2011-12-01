@@ -5,6 +5,8 @@
 import os
 import sys
 import traceback
+import urllib2
+import mozlog
 from optparse import OptionParser
 from threading import Thread
 from manifestparser import TestManifest
@@ -24,6 +26,7 @@ class B2GPulseConsumer(GenericConsumer):
 
 class B2GAutomation:
     def __init__(self, test_manifest, offline=False):
+        self.logger = mozlog.getLogger('B2G_AUTOMATION')
         self.testlist = self.get_test_list(test_manifest)
         print "Testlist: %s" % self.testlist
         self.offline = offline
@@ -35,14 +38,11 @@ class B2GAutomation:
             pulse.listen()
         else:
             t = Thread(target=pulse.listen)
+            t.daemon = True
             t.start()
 
-    def log(self, msg):
-        # TODO: this should probably use real python logging
-        print msg
-
     def get_test_list(self, manifest):
-        self.log("Reading test manifest: %s" % manifest)
+        self.logger.info("Reading test manifest: %s" % manifest)
         mft = TestManifest()
         mft.read(manifest)
 
@@ -61,42 +61,42 @@ class B2GAutomation:
         if buildurl in msg['payload']:
             dir = self.install_build(msg["payload"]["buildurl"])
             if dir == None:
-                self.log("Failed to return build directory")
+                self.logger.info("Failed to return build directory")
             self.run_marionette(dir)
         else:
-            self.log("Fail to find buildurl in msg not running test")
+            self.logger.error("Fail to find buildurl in msg not running test")
 
     # Download the build and untar it, return the directory it untared to
     def install_build(self, url):
         try:
-            self.log("Installing build from url: %s" % url)
+            self.logger.info("Installing build from url: %s" % url)
             resp = urllib2.urlopen(url)
             tarball = resp.read()
             f = open("b2gtarball.tar.gz", "wb")
             f.write()
             f.close()
         except:
-            self.log("Failed to download build")
+            self.logger.error("Failed to download build")
 
         try:
-            self.log("Untarring build")
+            self.logger.info("Untarring build")
             p = subprocess.Popen(["tar", "-zvxf", "b2gtarball.tar.gz"],
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT)
             logmsg = p.communicate()[0]
-            self.log(logmsg)
+            self.logger.info(logmsg)
             # This should open a qemu directory
             if os.path.exists("qemu"):
                 return os.path.abspath("qemu")
             else:
                 return None
         except:
-            self.log("Failed to untar file")
+            self.logger.error("Failed to untar file")
         return None
 
 
     def run_marionette(self, dir):
-        self.log("Starting test run")
+        self.logger.info("Starting test run")
         # Start up marionette
         m = Marionette(emulator=True, homedir=dir)
         assert(m.start_session())
@@ -111,6 +111,15 @@ def main():
     parser.add_option("--test-manifest", action="store", dest="testmanifest",
                       default = os.path.join("tests","all-tests.ini"),
                       help="Specify the test manifest, defaults to tests/all-tests.ini")
+    parser.add_option("--log-file", action="store", dest="logfile",
+                      default="b2gautomation.log",
+                      help="Log file to store results, defaults to b2gautomation.log")
+
+    LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR")
+    LEVEL_STRING = ", ".join(LOG_LEVELS)
+    parser.add_option("--log-level", action="store", type="choice",
+                      dest="loglevel", default="DEBUG", choices=LOG_LEVELS,
+                      help = "One of %s for logging level, defaults  to debug" % LEVEL_STRING)
     options, args = parser.parse_args()
 
     if not options.testmanifest:
@@ -122,15 +131,22 @@ def main():
         parser.print_usage()
         parser.exit()
 
+    # Set up the logger
+    if os.path.exists(options.logfile):
+        os.remove(options.logfile)
+
+    logger = mozlog.getLogger("B2G_AUTOMATION", options.logfile)
+    if options.loglevel:
+        logger.setLevel(getattr(mozlog, options.loglevel, "DEBUG"))
+
     try:
         b2gauto = B2GAutomation(options.testmanifest, offline=options.offline)
         # this is test code
-        #d = b2gauto.install_build("http://people.mozilla.org/~ctalbert/ruby/ruby-on-the-beach.jpg")
-        #b2gauto.run_marionette(d)
+        d = b2gauto.install_build("http://10.242.30.20/out/qemu_package.tar.gz")
+        b2gauto.run_marionette(d)
     except:
-        t, v, tb = sys.exc_info()
-        print "B2GAutomation threw exception: %s %s" % (t, v)
-        traceback.print_tb(tb)
+        s = traceback.format_exc()
+        logger.error(s)
         return 1
     return 0
 
