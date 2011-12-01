@@ -6,23 +6,36 @@ import os
 import sys
 import traceback
 from optparse import OptionParser
-from pulsebuildmonitor import start_pulse_monitor
+from threading import Thread
 from manifestparser import TestManifest
 from runtests import run_test
 from marionette import Marionette
+
+from mozillapulse.config import PulseConfiguration
+from mozillapulse.consumers import GenericConsumer
+
+
+class B2GPulseConsumer(GenericConsumer):
+    def __init__(self, **kwargs):
+        super(B2GPulseConsumer, self).__init__(PulseConfiguration(**kwargs),
+                                               'org.mozilla.exchange.b2g',
+                                               **kwargs)
+
 
 class B2GAutomation:
     def __init__(self, test_manifest, offline=False):
         self.testlist = self.get_test_list(test_manifest)
         print "Testlist: %s" % self.testlist
         self.offline = offline
-        pulsemonitor = start_pulse_monitor(buildCallback=self.on_build,
-                                           tree=["b2g"],
-                                           platform=["linux"],
-                                           mobile=False,
-                                           buildtype=False)
+
+        pulse = B2GPulseConsumer(applabel='b2g_build_listener')
+        pulse.configure(topic='#', callback=self.on_build)
+
         if not offline:
-            pulsemonitor.join()
+            pulse.listen()
+        else:
+            t = Thread(target=pulse.listen)
+            t.start()
 
     def log(self, msg):
         # TODO: this should probably use real python logging
@@ -123,3 +136,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
