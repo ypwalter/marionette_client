@@ -13,7 +13,7 @@ from threading import Thread
 from manifestparser import TestManifest
 from runtests import run_test
 from marionette import Marionette
-from mozinstall import install 
+from mozinstall import install
 
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
@@ -57,12 +57,12 @@ class B2GAutomation:
 
         return testlist
 
-    def on_build(self, msg):
+    def on_build(self, data, msg):
         # Found marionette build! Install it
-        print "Found build %s" % msg
-        if buildurl in msg:
-            dir = self.install_build(msg["payload"]["buildurl"])
-            rev = msg["payload"]["commit"]
+        print "Found build %s" % data 
+        if "buildurl" in data["payload"]:
+            dir = self.install_build(data["payload"]["buildurl"])
+            rev = data["payload"]["commit"]
             if dir == None:
                 self.logger.info("Failed to return build directory")
             self.run_marionette(dir, rev)
