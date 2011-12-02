@@ -148,9 +148,9 @@ def main():
 
     try:
         b2gauto = B2GAutomation(options.testmanifest, offline=options.offline)
-        # this is test code
-        d = b2gauto.install_build("http://10.242.30.20/out/qemu_package.tar.gz")
-        b2gauto.run_marionette(d)
+        # this is test code, only executed if you run with --offline
+        #d = b2gauto.install_build("http://10.242.30.20/out/qemu_package.tar.gz")
+        #b2gauto.run_marionette(d)
     except:
         s = traceback.format_exc()
         logger.error(s)
