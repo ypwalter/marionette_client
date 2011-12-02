@@ -101,7 +101,7 @@ class B2GAutomation:
         m = Marionette(emulator=True, homedir=dir)
         assert(m.start_session())
         for test in self.testlist:
-            run_test(test, m, rev)
+            run_test(test, m, rev, autolog=True)
         m.delete_session()
 
     def cleanup(self, dir):

@@ -10,7 +10,7 @@ from mozautolog import RESTfulAutologTestGroup
 from marionette import Marionette
 
 
-def run_test(test, marionette, revision = None):
+def run_test(test, marionette, revision=None, autolog=False):
     filepath = os.path.join(os.path.dirname(__file__), test)
 
     if os.path.isdir(filepath):
@@ -37,7 +37,8 @@ def run_test(test, marionette, revision = None):
     elapsedtime = datetime.utcnow() - timestart
     if suite.countTestCases():
         results = unittest.TextTestRunner(verbosity=3).run(suite)
-        report_results(results, revision, elapsedtime)
+        if autolog:
+            report_results(results, revision, elapsedtime)
 
 # The results are the TextTestResults object. Let's go push these to autolog
 def report_results(results, revision, elapsedtime):
@@ -89,6 +90,10 @@ def report_results(results, revision, elapsedtime):
 
 if __name__ == "__main__":
     parser = OptionParser(usage='%prog [options] test_file_or_dir <test_file_or_dir> ...')
+    parser.add_option("--autolog",
+                      action = "store_true", dest = "autolog",
+                      default = False,
+                      help = "send test results to autolog")
     parser.add_option("--emulator",
                       action = "store_true", dest = "emulator",
                       default = False,
@@ -120,7 +125,7 @@ if __name__ == "__main__":
     assert(m.start_session())
 
     for test in tests:
-        run_test(test, m)
+        run_test(test, m, autolog=options.autolog)
 
     m.delete_session()
 
