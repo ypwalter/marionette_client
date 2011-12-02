@@ -31,7 +31,8 @@ def run_test(test, marionette):
             for testname in testnames:
                 suite.addTest(obj(marionette, methodName=testname))
     if suite.countTestCases():
-        unittest.TextTestRunner(verbosity=3).run(suite)
+        results = unittest.TextTestRunner(verbosity=3).run(suite)
+        print "CLINTDBG: results are: %s" % results
 
 
 if __name__ == "__main__":
