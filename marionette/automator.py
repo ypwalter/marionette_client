@@ -61,10 +61,11 @@ class B2GAutomation:
         # Found marionette build! Install it
         print "Found build %s" % msg
         if buildurl in msg:
-            dir = self.install_build(msg["buildurl"])
+            dir = self.install_build(msg["payload"]["buildurl"])
+            rev = msg["payload"]["commit"]
             if dir == None:
                 self.logger.info("Failed to return build directory")
-            self.run_marionette(dir)
+            self.run_marionette(dir, rev)
             self.cleanup(dir)
         else:
             self.logger.error("Fail to find buildurl in msg not running test")
@@ -94,13 +95,13 @@ class B2GAutomation:
         return None
 
 
-    def run_marionette(self, dir):
-        self.logger.info("Starting test run")
+    def run_marionette(self, dir, rev):
+        self.logger.info("Starting test run for revision: %s" % rev)
         # Start up marionette
         m = Marionette(emulator=True, homedir=dir)
         assert(m.start_session())
         for test in self.testlist:
-            run_test(test, m)
+            run_test(test, m, rev)
         m.delete_session()
 
     def cleanup(self, dir):
