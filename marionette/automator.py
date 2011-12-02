@@ -7,6 +7,7 @@ import sys
 import traceback
 import urllib
 import mozlog
+import shutil
 from optparse import OptionParser
 from threading import Thread
 from manifestparser import TestManifest
@@ -64,6 +65,7 @@ class B2GAutomation:
             if dir == None:
                 self.logger.info("Failed to return build directory")
             self.run_marionette(dir)
+            self.cleanup(dir)
         else:
             self.logger.error("Fail to find buildurl in msg not running test")
 
@@ -100,6 +102,13 @@ class B2GAutomation:
         for test in self.testlist:
             run_test(test, m)
         m.delete_session()
+
+    def cleanup(self, dir):
+        self.logger.info("Cleaning up")
+        if os.path.exists("b2gtarball.tar.gz"):
+            os.remove("b2gtarball.tar.gz")
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
 
 def main():
     parser = OptionParser(usage="%prog <options>")
