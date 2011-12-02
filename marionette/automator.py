@@ -12,9 +12,7 @@ from threading import Thread
 from manifestparser import TestManifest
 from runtests import run_test
 from marionette import Marionette
-
-# This is kind of awkward, but we don't want to copy paste the code
-from mozinstall import _extract
+from mozinstall import install 
 
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
@@ -83,7 +81,7 @@ class B2GAutomation:
             # Extract to the same local directory where we downloaded the build
             # to.  This defaults to the local directory where our script runs
             dest = os.path.dirname(buildfile)
-            _extract(buildfile, dest)
+            install(buildfile, dest)
             # This should extract into a qemu directory
             if os.path.exists("qemu"):
                 return os.path.abspath("qemu")
