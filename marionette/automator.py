@@ -5,7 +5,7 @@
 import os
 import sys
 import traceback
-import urllib2
+import urllib
 import mozlog
 from optparse import OptionParser
 from threading import Thread
@@ -58,8 +58,8 @@ class B2GAutomation:
     def on_build(self, msg):
         # Found marionette build! Install it
         print "Found build %s" % msg
-        if buildurl in msg['payload']:
-            dir = self.install_build(msg["payload"]["buildurl"])
+        if buildurl in msg:
+            dir = self.install_build(msg["buildurl"])
             if dir == None:
                 self.logger.info("Failed to return build directory")
             self.run_marionette(dir)
@@ -70,13 +70,10 @@ class B2GAutomation:
     def install_build(self, url):
         try:
             self.logger.info("Installing build from url: %s" % url)
-            resp = urllib2.urlopen(url)
-            tarball = resp.read()
-            f = open("b2gtarball.tar.gz", "wb")
-            f.write()
-            f.close()
+            buildfile = os.path.abspath("b2gtarball.tar.gz")
+            urllib.urlretrieve(url, buildfile)
         except:
-            self.logger.error("Failed to download build")
+            self.logger.error("Failed to download build: %s %s" % sys.exc_info()[:2])
 
         try:
             self.logger.info("Untarring build")
