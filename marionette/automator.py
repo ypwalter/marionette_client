@@ -13,6 +13,9 @@ from manifestparser import TestManifest
 from runtests import run_test
 from marionette import Marionette
 
+# This is kind of awkward, but we don't want to copy paste the code
+from mozinstall import _extract
+
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
 
@@ -77,18 +80,17 @@ class B2GAutomation:
 
         try:
             self.logger.info("Untarring build")
-            p = subprocess.Popen(["tar", "-zvxf", "b2gtarball.tar.gz"],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
-            logmsg = p.communicate()[0]
-            self.logger.info(logmsg)
-            # This should open a qemu directory
+            # Extract to the same local directory where we downloaded the build
+            # to.  This defaults to the local directory where our script runs
+            dest = os.path.dirname(buildfile)
+            _extract(buildfile, dest)
+            # This should extract into a qemu directory
             if os.path.exists("qemu"):
                 return os.path.abspath("qemu")
             else:
                 return None
         except:
-            self.logger.error("Failed to untar file")
+            self.logger.error("Failed to untar file: %s %s" % sys.exc_info()[:2])
         return None
 
 
