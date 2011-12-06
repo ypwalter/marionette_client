@@ -13,7 +13,7 @@ from threading import Thread
 from manifestparser import TestManifest
 from runtests import run_test
 from marionette import Marionette
-from mozinstall import install 
+from mozinstall import install
 
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
@@ -57,14 +57,15 @@ class B2GAutomation:
 
         return testlist
 
-    def on_build(self, msg):
+    def on_build(self, data, msg):
         # Found marionette build! Install it
-        print "Found build %s" % msg
-        if buildurl in msg:
-            dir = self.install_build(msg["buildurl"])
+        print "Found build %s" % data 
+        if "buildurl" in data["payload"]:
+            dir = self.install_build(data["payload"]["buildurl"])
+            rev = data["payload"]["commit"]
             if dir == None:
                 self.logger.info("Failed to return build directory")
-            self.run_marionette(dir)
+            self.run_marionette(dir, rev)
             self.cleanup(dir)
         else:
             self.logger.error("Fail to find buildurl in msg not running test")
@@ -94,13 +95,13 @@ class B2GAutomation:
         return None
 
 
-    def run_marionette(self, dir):
-        self.logger.info("Starting test run")
+    def run_marionette(self, dir, rev):
+        self.logger.info("Starting test run for revision: %s" % rev)
         # Start up marionette
         m = Marionette(emulator=True, homedir=dir)
         assert(m.start_session())
         for test in self.testlist:
-            run_test(test, m)
+            run_test(test, m, rev, autolog=True)
         m.delete_session()
 
     def cleanup(self, dir):
@@ -147,9 +148,9 @@ def main():
 
     try:
         b2gauto = B2GAutomation(options.testmanifest, offline=options.offline)
-        # this is test code
-        d = b2gauto.install_build("http://10.242.30.20/out/qemu_package.tar.gz")
-        b2gauto.run_marionette(d)
+        # this is test code, only executed if you run with --offline
+        #d = b2gauto.install_build("http://10.242.30.20/out/qemu_package.tar.gz")
+        #b2gauto.run_marionette(d)
     except:
         s = traceback.format_exc()
         logger.error(s)

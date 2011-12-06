@@ -197,7 +197,7 @@ class Emulator(object):
 
         return local_port
 
-    def wait_for_port(self, timeout=180):
+    def wait_for_port(self, timeout=300):
         assert(self.marionette_port)
         starttime = datetime.datetime.now()
         while datetime.datetime.now() - starttime < datetime.timedelta(seconds=timeout):
