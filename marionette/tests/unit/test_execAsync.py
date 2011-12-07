@@ -69,3 +69,10 @@ class TestExecute(MarionetteTestCase):
         marionette = self.marionette
         self.assertRaises(JavascriptException, marionette.execute_script, "return Components.classes;")
 
+    def test_chrome_async(self):
+        self.marionette.set_context("chrome")
+        self.assertEquals(2, self.marionette.execute_async_script("marionetteScriptFinished(2);"))
+        self.marionette.set_context("content")
+
+
+
