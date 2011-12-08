@@ -48,6 +48,7 @@ def report_results(results, revision, elapsedtime):
         testgroup = 'b2gautomatedtest',
         os = 'android',
         platform = 'emulator',
+        harness = 'marionette',
         machine = socket.gethostname())
 
     testgroup.set_primary_product(
