@@ -37,59 +37,71 @@ from marionette_test import MarionetteTestCase
 from errors import JavascriptException, MarionetteException, ScriptTimeoutException
 
 #TODO add to class below
-returnSyncFailed = "return marionetteFinish().failed;"
-returnSyncPassed = "return marionetteFinish().passed;"
-returnAsyncFailed = "marionetteScriptFinished(marionetteFinish().failed);"
-returnAsyncPassed = "marionetteScriptFinished(marionetteFinish().passed);"
+callFinish = "return Marionette.finish();"
 
 class TestSentTests(MarionetteTestCase):
     def test_is(self):
-        sentFail1 = "marionetteIs(true, false, 'isTest1');"
-        sentFail2 = "marionetteIs(true, false, 'isTest2');" 
-        sentPass1 = "marionetteIs(true, true, 'isTest3');"
-        sentPass2 = "marionetteIs(true, true, 'isTest4');"
+        def runtests():
+            sentFail1 = "Marionette.is(true, false, 'isTest1');" + callFinish
+            sentFail2 = "Marionette.is(true, false, 'isTest2');" + callFinish
+            sentPass1 = "Marionette.is(true, true, 'isTest3');" + callFinish
+            sentPass2 = "Marionette.is(true, true, 'isTest4');" + callFinish
+    
+            self.assertEqual(1, self.marionette.execute_script(sentFail1)["failed"])
+            self.assertEqual(0, self.marionette.execute_script(sentFail2)["passed"])
+            self.assertEqual(1, self.marionette.execute_script(sentPass1)["passed"])
+            self.assertEqual(0, self.marionette.execute_script(sentPass2)["failed"])
+    
+            self.marionette.set_script_timeout(1000)
+            self.assertEqual(1, self.marionette.execute_async_script(sentFail1)["failed"])
+            self.assertEqual(0, self.marionette.execute_async_script(sentFail2)["passed"])
+            self.assertEqual(1, self.marionette.execute_async_script(sentPass1)["passed"])
+            self.assertEqual(0, self.marionette.execute_async_script(sentPass2)["failed"])
+        self.marionette.set_context("content")
+        runtests()
+        self.marionette.set_context("chrome")
+        runtests()
 
-        self.assertEqual(1, self.marionette.execute_script(sentFail1 + returnSyncFailed))
-        self.assertEqual(0, self.marionette.execute_script(sentFail2 + returnSyncPassed))
-        self.assertEqual(1, self.marionette.execute_script(sentPass1 + returnSyncPassed))
-        self.assertEqual(0, self.marionette.execute_script(sentPass2 + returnSyncFailed))
-
-        self.marionette.set_script_timeout(1000)
-        self.assertEqual(1, self.marionette.execute_async_script(sentFail1 + returnAsyncFailed))
-        self.assertEqual(0, self.marionette.execute_async_script(sentFail2 + returnAsyncPassed))
-        self.assertEqual(1, self.marionette.execute_async_script(sentPass1 + returnAsyncPassed))
-        self.assertEqual(0, self.marionette.execute_async_script(sentPass2 + returnAsyncFailed))
-
-    def test_isNot(self):
-        sentFail1 = "marionetteIsNot(true, true, 'isTest3');"
-        sentFail2 = "marionetteIsNot(true, true, 'isTest4');"
-        sentPass1 = "marionetteIsNot(true, false, 'isTest1');"
-        sentPass2 = "marionetteIsNot(true, false, 'isTest2');"
-
-        self.assertEqual(1, self.marionette.execute_script(sentFail1 + returnSyncFailed));
-        self.assertEqual(0, self.marionette.execute_script(sentFail2 + returnSyncPassed));
-        self.assertEqual(0, self.marionette.execute_script(sentPass1 + returnSyncFailed));
-        self.assertEqual(1, self.marionette.execute_script(sentPass2 + returnSyncPassed));
-
-        self.marionette.set_script_timeout(1000)
-        self.assertEqual(1, self.marionette.execute_async_script(sentFail1 + returnAsyncFailed));
-        self.assertEqual(0, self.marionette.execute_async_script(sentFail2 + returnAsyncPassed));
-        self.assertEqual(0, self.marionette.execute_async_script(sentPass1 + returnAsyncFailed));
-        self.assertEqual(1, self.marionette.execute_async_script(sentPass2 + returnAsyncPassed));
+    def test_isnot(self):
+        def runtests():
+           sentFail1 = "Marionette.isnot(true, true, 'isTest3');" + callFinish
+           sentFail2 = "Marionette.isnot(true, true, 'isTest4');" + callFinish
+           sentPass1 = "Marionette.isnot(true, false, 'isTest1');" + callFinish
+           sentPass2 = "Marionette.isnot(true, false, 'isTest2');" + callFinish
+   
+           self.assertEqual(1, self.marionette.execute_script(sentFail1)["failed"]);
+           self.assertEqual(0, self.marionette.execute_script(sentFail2)["passed"]);
+           self.assertEqual(0, self.marionette.execute_script(sentPass1)["failed"]);
+           self.assertEqual(1, self.marionette.execute_script(sentPass2)["passed"]);
+   
+           self.marionette.set_script_timeout(1000)
+           self.assertEqual(1, self.marionette.execute_async_script(sentFail1)["failed"]);
+           self.assertEqual(0, self.marionette.execute_async_script(sentFail2)["passed"]);
+           self.assertEqual(0, self.marionette.execute_async_script(sentPass1)["failed"]);
+           self.assertEqual(1, self.marionette.execute_async_script(sentPass2)["passed"]);
+        self.marionette.set_context("content")
+        runtests()
+        self.marionette.set_context("chrome")
+        runtests()
 
     def test_ok(self):
-        sentFail1 = "marionetteOk(1==2, 'testOk', 'testOk');"
-        sentFail2 = "marionetteOk(1==2, 'testOk', 'testOk');"
-        sentPass1 = "marionetteOk(1==1, 'testOk', 'testOk');"
-        sentPass2 = "marionetteOk(1==1, 'testOk', 'testOk');" 
-
-        self.assertEqual(1, self.marionette.execute_script(sentFail1 + returnSyncFailed));
-        self.assertEqual(0, self.marionette.execute_script(sentFail2 + returnSyncPassed));
-        self.assertEqual(0, self.marionette.execute_script(sentPass1 + returnSyncFailed));
-        self.assertEqual(1, self.marionette.execute_script(sentPass2 + returnSyncPassed));
-
-        self.marionette.set_script_timeout(1000)
-        self.assertEqual(1, self.marionette.execute_async_script(sentFail1 + returnAsyncFailed));
-        self.assertEqual(0, self.marionette.execute_async_script(sentFail2 + returnAsyncPassed));
-        self.assertEqual(0, self.marionette.execute_async_script(sentPass1 + returnAsyncFailed));
-        self.assertEqual(1, self.marionette.execute_async_script(sentPass2 + returnAsyncPassed));
+        def runtests():
+            sentFail1 = "Marionette.ok(1==2, 'testOk', 'testOk');" + callFinish
+            sentFail2 = "Marionette.ok(1==2, 'testOk', 'testOk');" + callFinish
+            sentPass1 = "Marionette.ok(1==1, 'testOk', 'testOk');" + callFinish
+            sentPass2 = "Marionette.ok(1==1, 'testOk', 'testOk');" + callFinish
+    
+            self.assertEqual(1, self.marionette.execute_script(sentFail1)["failed"]);
+            self.assertEqual(0, self.marionette.execute_script(sentFail2)["passed"]);
+            self.assertEqual(0, self.marionette.execute_script(sentPass1)["failed"]);
+            self.assertEqual(1, self.marionette.execute_script(sentPass2)["passed"]);
+    
+            self.marionette.set_script_timeout(1000)
+            self.assertEqual(1, self.marionette.execute_async_script(sentFail1)["failed"]);
+            self.assertEqual(0, self.marionette.execute_async_script(sentFail2)["passed"]);
+            self.assertEqual(0, self.marionette.execute_async_script(sentPass1)["failed"]);
+            self.assertEqual(1, self.marionette.execute_async_script(sentPass2)["passed"]);
+        self.marionette.set_context("content")
+        runtests()
+        self.marionette.set_context("chrome")
+        runtests()
