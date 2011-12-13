@@ -204,7 +204,7 @@ class Emulator(object):
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.connect(('localhost', self.marionette_port))
-                data = sock.recv(10)
+                data = sock.recv(16)
                 sock.close()
                 if '"from"' in data:
                     return True
