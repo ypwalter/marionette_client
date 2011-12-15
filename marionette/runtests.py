@@ -8,6 +8,25 @@ from datetime import datetime
 
 from mozautolog import RESTfulAutologTestGroup
 from marionette import Marionette
+from marionette_test import MarionetteJSTestCase
+
+
+class MarionetteTestResult(unittest.TextTestResult):
+
+    def getDescription(self, test):
+        doc_first_line = test.shortDescription()
+        if self.descriptions and doc_first_line:
+            return '\n'.join((str(test), doc_first_line))
+        else:
+            desc = str(test)
+            if hasattr(test, 'jsFile'):
+                desc = "%s, %s" % (test.jsFile, desc)
+            return desc
+
+
+class MarionetteTestRunner(unittest.TextTestRunner):
+
+    resultclass = MarionetteTestResult
 
 
 def run_test(test, marionette, revision=None, autolog=False):
@@ -16,27 +35,36 @@ def run_test(test, marionette, revision=None, autolog=False):
     if os.path.isdir(filepath):
         for root, dirs, files in os.walk(filepath):
             for filename in files:
-                if filename.startswith('test_') and filename.endswith('.py'):
+                if filename.startswith('test_') and (filename.endswith('.py') or
+                                                     filename.endswith('.js')):
                     filepath = os.path.join(root, filename)
                     run_test(filepath, marionette)
         return
 
     mod_name,file_ext = os.path.splitext(os.path.split(filepath)[-1])
-    test_mod = imp.load_source(mod_name, filepath)
 
     testloader = unittest.TestLoader()
     suite = unittest.TestSuite()
     timestart = datetime.utcnow()
-    for name in dir(test_mod):
-        obj = getattr(test_mod, name)
-        if (isinstance(obj, (type, types.ClassType)) and
-            issubclass(obj, unittest.TestCase)):
-            testnames = testloader.getTestCaseNames(obj)
-            for testname in testnames:
-                suite.addTest(obj(marionette, methodName=testname))
+
+    if file_ext == '.py':
+        test_mod = imp.load_source(mod_name, filepath)
+
+        for name in dir(test_mod):
+            obj = getattr(test_mod, name)
+            if (isinstance(obj, (type, types.ClassType)) and
+                issubclass(obj, unittest.TestCase)):
+                testnames = testloader.getTestCaseNames(obj)
+                for testname in testnames:
+                    suite.addTest(obj(marionette, methodName=testname))
+
+    elif file_ext == '.js':
+        suite.addTest(MarionetteJSTestCase(marionette, jsFile=filepath))
+
+    # XXX fixme: elapsedtime shoudl be calculated after tests are run
     elapsedtime = datetime.utcnow() - timestart
     if suite.countTestCases():
-        results = unittest.TextTestRunner(verbosity=3).run(suite)
+        results = MarionetteTestRunner(verbosity=3).run(suite)
         if autolog:
             report_results(results, revision, elapsedtime)
 
@@ -45,7 +73,7 @@ def report_results(results, revision, elapsedtime):
     # This is all autolog stuff.
     # See: https://wiki.mozilla.org/Auto-tools/Projects/Autolog
     testgroup = RESTfulAutologTestGroup(
-        testgroup = 'b2gautomatedtest',
+        testgroup = 'marionette',
         os = 'android',
         platform = 'emulator',
         harness = 'marionette',
@@ -64,7 +92,7 @@ def report_results(results, revision, elapsedtime):
     passes = results.testsRun - (failures + todo)
 
     testgroup.add_test_suite(
-        testsuite='b2g emulator testsuite',
+        testsuite = 'b2g emulator testsuite',
         elapsedtime = elapsedtime.total_seconds(),
         cmdline = '',
         passed = passes,
@@ -121,12 +149,13 @@ if __name__ == "__main__":
         m = Marionette(emulator=True,
                        homedir=options.homedir)
     else:
-        raise Exception("must specify --address or --emulator")
+        m = None
+        #raise Exception("must specify --address or --emulator")
 
-    assert(m.start_session())
+    #assert(m.start_session())
 
     for test in tests:
         run_test(test, m, autolog=options.autolog)
 
-    m.delete_session()
+    #m.delete_session()
 

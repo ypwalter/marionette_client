@@ -248,6 +248,20 @@ class Marionette(object):
         response = self._send_message('refresh', 'ok')
         return response
 
+    def execute_js_script(self, script, script_args=None, timeout=True):
+        if script_args is None:
+            script_args = []
+        args = [{'ELEMENT': arg.id} if type(arg) == 
+                HTMLElement else arg for arg in script_args]
+        response = self._send_message('executeJSScript',
+                                      'value',
+                                      value=script,
+                                      args=args,
+                                      timeout=timeout)
+        if type(response) == dict and response.has_key('ELEMENT'):
+            response = HTMLElement(self, response['ELEMENT'])
+        return response
+
     def execute_script(self, script, script_args=None):
         if script_args is None:
             script_args = []

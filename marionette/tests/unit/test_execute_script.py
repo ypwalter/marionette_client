@@ -39,7 +39,7 @@ class ExecuteTest(MarionetteTestCase):
         self.marionette.set_script_timeout(2000)
         self.assertTrue(self.marionette.execute_async_script("""
             var callback = arguments[arguments.length - 1];
-            setTimeout(function() { callback(true); }, 1000);
+            setTimeout(function() { callback(true); }, 500);
             """))
 
     def test_execute_js_exception(self):

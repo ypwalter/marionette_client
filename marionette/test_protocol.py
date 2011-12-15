@@ -65,6 +65,8 @@ if __name__ == '__main__':
     assert(m.go_forward())
     assert(m.refresh())
     assert(m.execute_script(server.TEST_EXECUTE_SCRIPT))
+    assert(m.execute_js_script(server.TEST_EXECUTE_SCRIPT))
+    assert(m.execute_js_script(server.TEST_EXECUTE_SCRIPT, server.TEST_EXECUTE_SCRIPT_ARGS))
     assert(m.execute_script(server.TEST_EXECUTE_SCRIPT, server.TEST_EXECUTE_SCRIPT_ARGS))
     assert(m.execute_async_script(server.TEST_EXECUTE_SCRIPT))
     assert(m.execute_async_script(server.TEST_EXECUTE_SCRIPT, server.TEST_EXECUTE_SCRIPT_ARGS))

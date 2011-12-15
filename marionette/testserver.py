@@ -75,6 +75,7 @@ class TestServer(object):
         'refresh': { 'ok': True },
         'executeScript': { 'value': TEST_EXECUTE_RETURN_VALUE },
         'executeAsyncScript': { 'value': TEST_EXECUTE_RETURN_VALUE },
+        'executeJSScript': { 'value': TEST_EXECUTE_RETURN_VALUE },
         'findElement': { 'value': TEST_FIND_ELEMENT },
         'findElements': { 'values': TEST_FIND_ELEMENTS },
         'clickElement': { 'ok': True },
