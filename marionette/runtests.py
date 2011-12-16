@@ -11,7 +11,7 @@ from marionette import Marionette
 from marionette_test import MarionetteJSTestCase
 
 
-class MarionetteTestResult(unittest.TextTestResult):
+class MarionetteTestResult(unittest._TextTestResult):
 
     def getDescription(self, test):
         doc_first_line = test.shortDescription()
