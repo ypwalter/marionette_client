@@ -85,14 +85,20 @@ class Emulator(object):
             return self.port is not None
 
     def _check_for_adb(self):
-        adb = subprocess.Popen(['which', 'adb'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        retcode = adb.wait()
-        if retcode:
-            raise Exception('which terminated with exit code %d: %s' 
-                            % (retcode, adb.stdout.read()))
-        out = adb.stdout.read().strip()
-        if len(out) and out.find('/') > -1:
-            self.adb = out
+        self.adb = os.path.join(self.homedir,
+                                'glue/gonk/out/host/linux-x86/bin/adb')
+        if not os.access(self.adb, os.F_OK):
+            self.adb = os.path.join(self.homedir, 'bin/adb')
+            if not os.access(self.adb, os.F_OK):
+                adb = subprocess.Popen(['which', 'adb'],
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT)
+                retcode = adb.wait()
+                if retcode:
+                    raise Exception('adb not found!')
+                out = adb.stdout.read().strip()
+                if len(out) and out.find('/') > -1:
+                    self.adb = out
 
     def _run_adb(self, args):
         args.insert(0, self.adb)
