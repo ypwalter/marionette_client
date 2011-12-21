@@ -45,6 +45,40 @@ class TestElements(MarionetteTestCase):
         self.marionette.navigate(test_html)
         self.assertEqual(HTMLElement, type(self.marionette.find_element("id", "mozLink")))
 
+    def test_tag_name(self):
+        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
+        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        self.marionette.navigate(test_html)
+        self.assertEqual(HTMLElement, type(self.marionette.find_element("tag name", "body")))
+
+    def test_class_name(self):
+        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
+        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        self.marionette.navigate(test_html)
+        self.assertEqual(HTMLElement, type(self.marionette.find_element("class name", "linkClass")))
+
+    def test_name(self):
+        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
+        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        self.marionette.navigate(test_html)
+        self.assertEqual(HTMLElement, type(self.marionette.find_element("name", "myInput")))
+    
+    def test_selector(self):
+        #not supported yet
+        pass
+
+    def test_link_text(self):
+        #not supported yet
+        pass
+
+    def test_partial_link_text(self):
+        #not supported yet
+        pass
+
+    def test_xpath(self):
+        #not supported yet
+        pass
+
     def test_not_found(self):
         #TODO: use the webserver when we have one, and in test.html, change the link to a local one
         test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
