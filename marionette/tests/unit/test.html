@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+<title>Marionette Test</title>
+</head>
+<body>
+  <script type="text/javascript">
+    window.ready = true;
+    setTimeout(addDelayedElement, 1000);
+    function addDelayedElement() {
+      var newDiv = document.createElement("div");
+      newDiv.id = "newDiv";
+      var newContent = document.createTextNode("I am a newly created div!");
+      newDiv.appendChild(newContent);
+      document.body.appendChild(newDiv);
+    }
+  </script>
+  <a href="http://www.mozilla.com" id="mozLink">Click me!</a>
+</body>
+</html> 
