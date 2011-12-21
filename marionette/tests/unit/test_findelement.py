@@ -37,7 +37,6 @@ import os
 from marionette_test import MarionetteTestCase
 from marionette import HTMLElement
 from errors import NoSuchElementException
-import time
 
 class TestElements(MarionetteTestCase):
     def test_id(self):
