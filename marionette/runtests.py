@@ -64,7 +64,9 @@ def run_test(test, marionette, revision=None, autolog=False):
     # XXX fixme: elapsedtime shoudl be calculated after tests are run
     elapsedtime = datetime.utcnow() - timestart
     if suite.countTestCases():
+        m.start_session()
         results = MarionetteTestRunner(verbosity=3).run(suite)
+        m.delete_session()
         if autolog:
             report_results(results, revision, elapsedtime)
 
