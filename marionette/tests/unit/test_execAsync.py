@@ -94,6 +94,7 @@ class TestExecuteAsyncContent(MarionetteTestCase):
 
 class TestExecuteAsyncChrome(TestExecuteAsyncContent):
     def setUp(self):
+        super(TestExecuteAsyncChrome, self).setUp()
         self.marionette.set_context("chrome")
 
     def test_execute_async_unload(self):
@@ -107,6 +108,3 @@ class TestExecuteAsyncChrome(TestExecuteAsyncContent):
 
     def test_execute_permission(self):
         self.assertEqual(1, self.marionette.execute_script("var c = Components.classes;return 1"))
-
-    def tearDown(self):
-        self.marionette.set_context("content")

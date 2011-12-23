@@ -8,6 +8,12 @@ class MarionetteTestCase(unittest.TestCase):
         self.marionette = marionette
         unittest.TestCase.__init__(self, methodName)
 
+    def setUp(self):
+        self.marionette.start_session()
+
+    def tearDown(self):
+        self.marionette.delete_session()
+
 class MarionetteJSTestCase(unittest.TestCase):
 
     context_re = re.compile(r"MARIONETTE_CONTEXT(\s*)=(\s*)['|\"](.*?)['|\"];")
@@ -20,6 +26,8 @@ class MarionetteJSTestCase(unittest.TestCase):
         unittest.TestCase.__init__(self, methodName)
 
     def runTest(self):
+        if self.marionette.session is None:
+            self.marionette.start_session()
         f = open(self.jsFile, 'r')
         js = f.read()
 
@@ -46,8 +54,8 @@ class MarionetteJSTestCase(unittest.TestCase):
                                  '%d tests failed' % results['failed'])
             self.assertTrue(results['passed'] + results['failed'] > 0,
                             'no tests fun')
-            if context != 'content':
-                self.marionette.set_context('content')
+            if self.marionette.session is not None:
+                self.marionette.delete_session()
 
         except ScriptTimeoutException:
             if 'timeout' in self.jsFile:

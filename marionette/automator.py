@@ -99,10 +99,8 @@ class B2GAutomation:
         self.logger.info("Starting test run for revision: %s" % rev)
         # Start up marionette
         m = Marionette(emulator=True, homedir=dir)
-        assert(m.start_session())
         for test in self.testlist:
             run_test(test, m, rev, autolog=True)
-        m.delete_session()
 
     def cleanup(self, dir):
         self.logger.info("Cleaning up")

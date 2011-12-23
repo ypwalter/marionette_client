@@ -68,6 +68,7 @@ class TestExecuteContent(MarionetteTestCase):
 
 class TestExecuteChrome(TestExecuteContent):
     def setUp(self):
+        super(TestExecuteChrome, self).setUp()
         self.marionette.set_context("chrome")
 
     def test_execute_permission(self):
@@ -75,6 +76,3 @@ class TestExecuteChrome(TestExecuteContent):
 
     def test_same_context(self):
         pass
-
-    def tearDown(self):
-        self.marionette.set_context("content")
