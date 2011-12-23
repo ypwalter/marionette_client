@@ -45,3 +45,33 @@ class TestNavigate(MarionetteTestCase):
         self.marionette.navigate(test_html)
         self.assertNotEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
         self.assertEqual("Marionette Test", self.marionette.execute_script("return window.document.title;"))
+
+    def test_goBack(self):
+        self.assertTrue(self.marionette.execute_script("window.location.href = 'about:blank'; return true;"))
+        self.assertEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
+        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
+        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        self.marionette.navigate(test_html)
+        self.assertNotEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
+        self.assertEqual("Marionette Test", self.marionette.execute_script("return window.document.title;"))
+        self.marionette.navigate("about:blank")
+        self.assertEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
+        self.marionette.go_back()
+        self.assertNotEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
+        self.assertEqual("Marionette Test", self.marionette.execute_script("return window.document.title;"))
+
+    def test_goForward(self):
+        self.assertTrue(self.marionette.execute_script("window.location.href = 'about:blank'; return true;"))
+        self.assertEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
+        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
+        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        self.marionette.navigate(test_html)
+        self.assertNotEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
+        self.assertEqual("Marionette Test", self.marionette.execute_script("return window.document.title;"))
+        self.marionette.navigate("about:blank")
+        self.assertEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
+        self.marionette.go_back()
+        self.assertNotEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
+        self.assertEqual("Marionette Test", self.marionette.execute_script("return window.document.title;"))
+        self.marionette.go_forward()
+        self.assertEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
