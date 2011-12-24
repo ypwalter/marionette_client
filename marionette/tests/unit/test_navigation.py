@@ -75,3 +75,15 @@ class TestNavigate(MarionetteTestCase):
         self.assertEqual("Marionette Test", self.marionette.execute_script("return window.document.title;"))
         self.marionette.go_forward()
         self.assertEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
+
+    def test_refresh(self):
+        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
+        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        self.marionette.navigate(test_html)
+        self.assertEqual("Marionette Test", self.marionette.execute_script("return window.document.title;"))
+        self.assertTrue(self.marionette.execute_script("var elem = window.document.createElement('div'); elem.id = 'someDiv';" +
+                                        "window.document.body.appendChild(elem); return true;"))
+        self.assertFalse(self.marionette.execute_script("return window.document.getElementById('someDiv') == undefined;"))
+        self.marionette.refresh()
+        self.assertEqual("Marionette Test", self.marionette.execute_script("return window.document.title;"))
+        self.assertTrue(self.marionette.execute_script("return window.document.getElementById('someDiv') == undefined;"))
