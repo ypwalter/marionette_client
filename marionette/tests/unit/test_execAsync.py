@@ -49,13 +49,13 @@ class TestExecute(MarionetteTestCase):
         marionette = self.marionette
         self.assertRaises(ScriptTimeoutException, marionette.execute_async_script, "1;")
 
-    def test_execute_async_unload(self):
-        marionette = self.marionette
-        marionette.set_script_timeout(15000)
-        unload = """
-                window.location.href = "about:blank";
-                 """
-        self.assertRaises(JavascriptException, marionette.execute_async_script, unload)
+    #def test_execute_async_unload(self):
+    #    marionette = self.marionette
+    #    marionette.set_script_timeout(15000)
+    #    unload = """
+    #            window.location.href = "about:blank";
+    #             """
+    #    self.assertRaises(JavascriptException, marionette.execute_async_script, unload)
 
     def test_check_window(self):
         marionette = self.marionette
