@@ -6,6 +6,7 @@ import unittest
 import socket
 from datetime import datetime
 
+from manifestparser import TestManifest
 from mozautolog import RESTfulAutologTestGroup
 from marionette import Marionette
 from marionette_test import MarionetteJSTestCase
@@ -46,6 +47,13 @@ def run_test(test, marionette, revision=None, autolog=False):
     testloader = unittest.TestLoader()
     suite = unittest.TestSuite()
     timestart = datetime.utcnow()
+
+    if file_ext == '.ini':
+        manifest = TestManifest()
+        manifest.read(filepath)
+        for i in manifest.get():
+            run_test(i["path"], marionette)
+        return
 
     if file_ext == '.py':
         test_mod = imp.load_source(mod_name, filepath)

@@ -33,46 +33,14 @@
 # 
 # ***** END LICENSE BLOCK ***** 
 
+import os
 from marionette_test import MarionetteTestCase
-from errors import JavascriptException, MarionetteException
 
-class TestExecuteContent(MarionetteTestCase):
-    def test_execute_simple(self):
-        self.assertEqual(1, self.marionette.execute_script("return 1;"))
-
-    def test_check_window(self):
-        self.assertTrue(self.marionette.execute_script("return (window !=null && window != undefined);"))
-
-    def test_same_context(self):
-        var1 = self.marionette.execute_script("""
-            window.wrappedJSObject._testvar = 'testing';
-            return window.wrappedJSObject._testvar;
-            """)
-
-    def test_execute_no_return(self):
-        self.assertRaises(MarionetteException, self.marionette.execute_script, "1;")
-
-    def test_execute_js_exception(self):
-        self.assertRaises(JavascriptException,
-            self.marionette.execute_script, "return foo(bar);")
-
-    def test_execute_async_js_exception(self):
-        self.assertRaises(JavascriptException,
-            self.marionette.execute_async_script, """
-            var callback = arguments[arguments.length - 1];
-            callback(foo());
-            """)
-        
-    def test_execute_permission(self):
-        self.assertRaises(JavascriptException, self.marionette.execute_script, "return Components.classes;")
-
-class TestExecuteChrome(TestExecuteContent):
-    def setUp(self):
-        super(TestExecuteChrome, self).setUp()
-        self.marionette.set_context("chrome")
-
-    def test_execute_permission(self):
-        self.assertEqual(1, self.marionette.execute_script("var c = Components.classes;return 1;"))
-
-    def test_same_context(self):
-        pass
+class TestClick(MarionetteTestCase):
+    def test_click(self):
+        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
+        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        self.marionette.navigate(test_html)
+        link = self.marionette.find_element("id", "mozLink")
+        link.click()
+        self.assertEqual("Clicked", self.marionette.execute_script("return document.getElementById('mozLink').innerHTML;"))

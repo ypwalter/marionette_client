@@ -127,7 +127,7 @@ class Marionette(object):
 
     def _send_message(self, command, response_key, **kwargs):
         if not self.session and command not in ('newSession', 'getStatus'):
-            self.start_session()
+            raise MarionetteException(message="Please start a session")
 
         message = { 'type': command }
         if self.session:

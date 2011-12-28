@@ -36,43 +36,76 @@
 from marionette_test import MarionetteTestCase
 from errors import JavascriptException, MarionetteException, ScriptTimeoutException
 
-class TestExecute(MarionetteTestCase):
+class TestExecuteAsyncContent(MarionetteTestCase):
     def test_execute_async_simple(self):
-        marionette = self.marionette
-        self.assertEqual(1, marionette.execute_async_script("arguments[arguments.length-1](1);"))
+        self.assertEqual(1, self.marionette.execute_async_script("arguments[arguments.length-1](1);"))
 
     def test_execute_async_ours(self):
-        marionette = self.marionette
-        self.assertEqual(1, marionette.execute_async_script("marionetteScriptFinished(1);"))
+        self.assertEqual(1, self.marionette.execute_async_script("marionetteScriptFinished(1);"))
 
     def test_execute_async_timeout(self):
-        marionette = self.marionette
-        self.assertRaises(ScriptTimeoutException, marionette.execute_async_script, "1;")
+        self.marionette.set_script_timeout(1000)
+        self.assertRaises(ScriptTimeoutException, self.marionette.execute_async_script, "1;")
+
+    def test_no_timeout(self):
+        self.marionette.set_script_timeout(2000)
+        self.assertTrue(self.marionette.execute_async_script("""
+            var callback = arguments[arguments.length - 1];
+            setTimeout(function() { callback(true); }, 500);
+            """))
 
     #def test_execute_async_unload(self):
-    #    marionette = self.marionette
-    #    marionette.set_script_timeout(15000)
+    #    self.marionette.set_script_timeout(5000)
     #    unload = """
     #            window.location.href = "about:blank";
     #             """
-    #    self.assertRaises(JavascriptException, marionette.execute_async_script, unload)
+    #    self.assertRaises(JavascriptException, self.marionette.execute_async_script, unload)
 
     def test_check_window(self):
-        marionette = self.marionette
-        self.assertTrue(marionette.execute_script("return (window !=null && window != undefined);"))
+        self.assertTrue(self.marionette.execute_script("return (window !=null && window != undefined);"))
+
+    def test_same_context(self):
+        var1 = self.marionette.execute_script("""
+            window.wrappedJSObject._testvar = 'testing';
+            return window.wrappedJSObject._testvar;
+            """)
 
     def test_execute_no_return(self):
-        marionette = self.marionette
-        self.assertRaises(MarionetteException, marionette.execute_script, "1;")
+        self.assertRaises(MarionetteException, self.marionette.execute_script, "1;")
         
-    def test_execute_permission_failure(self):
-        marionette = self.marionette
-        self.assertRaises(JavascriptException, marionette.execute_script, "return Components.classes;")
+    def test_execute_js_exception(self):
+        self.assertRaises(JavascriptException,
+            self.marionette.execute_script, "return foo(bar);")
 
-    def test_chrome_async(self):
+    def test_execute_async_js_exception(self):
+        self.assertRaises(JavascriptException,
+            self.marionette.execute_async_script, """
+            var callback = arguments[arguments.length - 1];
+            callback(foo());
+            """)
+
+    def test_script_finished(self):
+        self.assertTrue(self.marionette.execute_async_script("""
+            marionetteScriptFinished(true);
+            """))
+
+    def test_execute_permission(self):
+        self.assertRaises(JavascriptException, self.marionette.execute_script, "var c = Components.classes;return 1")
+
+class TestExecuteAsyncChrome(TestExecuteAsyncContent):
+    def setUp(self):
+        super(TestExecuteAsyncChrome, self).setUp()
         self.marionette.set_context("chrome")
-        self.assertEquals(2, self.marionette.execute_async_script("marionetteScriptFinished(2);"))
-        self.marionette.set_context("content")
 
+    def test_execute_async_unload(self):
+        pass
 
+    def test_check_window(self):
+        pass
+
+    def test_same_context(self):
+        pass
+
+    def test_execute_permission(self):
+        self.assertEqual(1, self.marionette.execute_script("var c = Components.classes;return 1"))
 
