@@ -7,7 +7,6 @@ import socket
 from datetime import datetime
 
 from manifestparser import TestManifest
-from mozautolog import RESTfulAutologTestGroup
 from marionette import Marionette
 from marionette_test import MarionetteJSTestCase
 
@@ -74,6 +73,7 @@ def run_test(test, marionette, revision=None, autolog=False):
     if suite.countTestCases():
         results = MarionetteTestRunner(verbosity=3).run(suite)
         if autolog:
+            from mozautolog import RESTfulAutologTestGroup
             report_results(results, revision, elapsedtime)
 
 # The results are the TextTestResults object. Let's go push these to autolog
