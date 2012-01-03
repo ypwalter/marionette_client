@@ -43,7 +43,11 @@ class MarionetteException(Exception):
         self.stacktrace = stacktrace
 
     def __str__(self):
-        return 'error: %s\nstacktrace: %s' % (self.message, self.stacktrace)
+        if self.stacktrace:
+            return '%s\nstacktrace:\n%s' % (self.message,
+                ''.join(['\t%s\n' % x for x in self.stacktrace.split('\n')]))
+        else:
+            return self.message
 
 class TimeoutException(MarionetteException):
     pass
@@ -71,3 +75,4 @@ class ElementNotVisibleException(MarionetteException):
 
 class NoSuchFrameException(MarionetteException):
     pass
+
