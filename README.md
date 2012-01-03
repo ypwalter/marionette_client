@@ -29,7 +29,11 @@ will likely be added.
 
 ## Installation
 
-No special requirements, unless you're using the Selenium proxy, in which
+You'll need the ManifestDestiny package from Mozbase:
+
+    git://github.com/mozilla/mozbase.git
+
+Other than that, there are no special requirements, unless you're using the Selenium proxy, in which
 case you'll need to install the Selenium Python bindings using:
 
     pip install selenium
