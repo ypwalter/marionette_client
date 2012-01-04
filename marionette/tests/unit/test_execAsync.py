@@ -33,7 +33,7 @@
 # 
 # ***** END LICENSE BLOCK ***** 
 
-from marionette_test import MarionetteTestCase
+from marionette_test import MarionetteTestCase, skip_if_b2g
 from errors import JavascriptException, MarionetteException, ScriptTimeoutException
 
 class TestExecuteAsyncContent(MarionetteTestCase):
@@ -54,12 +54,13 @@ class TestExecuteAsyncContent(MarionetteTestCase):
             setTimeout(function() { callback(true); }, 500);
             """))
 
-    #def test_execute_async_unload(self):
-    #    self.marionette.set_script_timeout(5000)
-    #    unload = """
-    #            window.location.href = "about:blank";
-    #             """
-    #    self.assertRaises(JavascriptException, self.marionette.execute_async_script, unload)
+    @skip_if_b2g
+    def test_execute_async_unload(self):
+        self.marionette.set_script_timeout(5000)
+        unload = """
+                window.location.href = "about:blank";
+                 """
+        self.assertRaises(JavascriptException, self.marionette.execute_async_script, unload)
 
     def test_check_window(self):
         self.assertTrue(self.marionette.execute_script("return (window !=null && window != undefined);"))

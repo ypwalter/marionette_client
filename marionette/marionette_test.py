@@ -1,6 +1,15 @@
 import re
 import unittest
 from errors import *
+import sys
+
+def skip_if_b2g(target):
+    def wrapper(self, *args, **kwargs):
+        if not hasattr(self.marionette, 'b2g') or not self.marionette.b2g:
+            return target(self, *args, **kwargs)
+        else:
+            sys.stderr.write('skipping ... ')
+    return wrapper
 
 class MarionetteTestCase(unittest.TestCase):
 

@@ -177,6 +177,7 @@ class Marionette(object):
     def start_session(self, desired_capabilities=None):
         # We are ignoring desired_capabilities, at least for now.
         self.session = self._send_message('newSession', 'value')
+        self.b2g = 'b2g' in self.session
         return self.session
 
     def delete_session(self):
