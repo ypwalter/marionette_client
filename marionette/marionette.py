@@ -100,12 +100,14 @@ class Marionette(object):
     CONTEXT_CONTENT = 'content'
 
     def __init__(self, host='localhost', port=2828, emulator=False,
-                 connectToRunningEmulator=False, homedir=None):
+                 connectToRunningEmulator=False, homedir=None,
+                 baseurl=None):
         self.host = host
         self.port = port
         self.session = None
         self.window = None
         self.emulator = None
+        self.baseurl = baseurl
 
         if emulator:
             self.emulator = Emulator(homedir=homedir)
@@ -170,6 +172,9 @@ class Marionette(object):
             else:
                 raise MarionetteException(message=message, status=status, stacktrace=stacktrace)
         raise MarionetteException(message=response, status=500)
+
+    def absolute_url(self, relative_url):
+        return "%s%s" % (self.baseurl, relative_url)
 
     def status(self):
         return self._send_message('getStatus', 'value')

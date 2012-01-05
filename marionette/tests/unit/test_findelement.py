@@ -40,26 +40,22 @@ from errors import NoSuchElementException
 
 class TestElements(MarionetteTestCase):
     def test_id(self):
-        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
-        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        test_html = self.marionette.absolute_url("test.html")
         self.marionette.navigate(test_html)
         self.assertEqual(HTMLElement, type(self.marionette.find_element("id", "mozLink")))
 
     def test_tag_name(self):
-        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
-        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        test_html = self.marionette.absolute_url("test.html")
         self.marionette.navigate(test_html)
         self.assertEqual(HTMLElement, type(self.marionette.find_element("tag name", "body")))
 
     def test_class_name(self):
-        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
-        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        test_html = self.marionette.absolute_url("test.html")
         self.marionette.navigate(test_html)
         self.assertEqual(HTMLElement, type(self.marionette.find_element("class name", "linkClass")))
 
     def test_name(self):
-        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
-        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        test_html = self.marionette.absolute_url("test.html")
         self.marionette.navigate(test_html)
         self.assertEqual(HTMLElement, type(self.marionette.find_element("name", "myInput")))
     
@@ -80,17 +76,15 @@ class TestElements(MarionetteTestCase):
         pass
 
     def test_not_found(self):
-        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
-        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        test_html = self.marionette.absolute_url("test.html")
         self.marionette.navigate(test_html)
         self.assertRaises(NoSuchElementException, self.marionette.find_element, "id", "I'm not on the page")
 
     def test_timeout(self):
-        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
-        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        test_html = self.marionette.absolute_url("test.html")
         self.marionette.navigate(test_html)
         self.assertRaises(NoSuchElementException, self.marionette.find_element, "id", "newDiv")
         self.assertTrue(True, self.marionette.set_search_timeout(4000))
-        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
         self.marionette.navigate(test_html)
         self.assertEqual(HTMLElement, type(self.marionette.find_element("id", "newDiv")))
+

@@ -9,6 +9,7 @@ from datetime import datetime
 from manifestparser import TestManifest
 from marionette import Marionette
 from marionette_test import MarionetteJSTestCase
+from mozhttpd import iface, MozHttpd
 
 
 class MarionetteTestResult(unittest._TextTestResult):
@@ -145,25 +146,35 @@ if __name__ == "__main__":
         parser.print_usage()
         parser.exit()
 
+    host = iface.get_lan_ip()
+    port = 8765
+    hoststr = 'http://%s:%d/' % (host, port)
+    print 'running webserver on', hoststr
+    httpd = MozHttpd(host=host,
+                     port=port,
+                     docroot=os.path.join(os.getcwd(), 'www'))
+    httpd.start()
+
     if options.address:
         host, port = options.address.split(':')
         if options.emulator:
             m = Marionette(host=host, port=int(port),
                            connectToRunningEmulator=True,
-                           homedir=options.homedir)
+                           homedir=options.homedir,
+                           baseurl=hoststr)
         else:
-            m = Marionette(host=host, port=int(port))
+            m = Marionette(host=host, port=int(port), baseurl=hoststr)
     elif options.emulator:
         m = Marionette(emulator=True,
-                       homedir=options.homedir)
+                       homedir=options.homedir,
+                       baseurl=hoststr)
     else:
         m = None
         #raise Exception("must specify --address or --emulator")
 
-    #assert(m.start_session())
-
     for test in tests:
         run_test(test, m, autolog=options.autolog)
 
-    #m.delete_session()
+    httpd.stop()
+
 

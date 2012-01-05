@@ -38,9 +38,9 @@ from marionette_test import MarionetteTestCase
 
 class TestClick(MarionetteTestCase):
     def test_click(self):
-        #TODO: use the webserver when we have one, and in test.html, change the link to a local one
-        test_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.html")
+        test_html = self.marionette.absolute_url("test.html")
         self.marionette.navigate(test_html)
         link = self.marionette.find_element("id", "mozLink")
         link.click()
         self.assertEqual("Clicked", self.marionette.execute_script("return document.getElementById('mozLink').innerHTML;"))
+
