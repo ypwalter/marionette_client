@@ -6,10 +6,19 @@ import unittest
 import socket
 from datetime import datetime
 
-from manifestparser import TestManifest
+try:
+    from manifestparser import TestManifest
+    from mozhttpd import iface, MozHttpd
+except ImportError:
+    print "manifestparser or mozhttpd not found!  Please install mozbase:\n"
+    print "\tgit clone git clone git://github.com/mozilla/mozbase.git"
+    print "\tpython setup_development.py\n"
+    import sys
+    sys.exit(1)
+
+
 from marionette import Marionette
 from marionette_test import MarionetteJSTestCase
-from mozhttpd import iface, MozHttpd
 
 
 class MarionetteTestResult(unittest._TextTestResult):

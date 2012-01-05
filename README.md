@@ -29,11 +29,11 @@ will likely be added.
 
 ## Installation
 
-You'll need the ManifestDestiny package from Mozbase:
+You'll need the ManifestDestiny and MozHttpd packages from Mozbase:
 
     git clone git://github.com/mozilla/mozbase.git
-    cd mozbase/manifestdestiny
-    python setup.py develop
+    cd mozbase
+    python setup_development.py
 
 Other than that, there are no special requirements, unless you're using the Selenium proxy, in which
 case you'll need to install the Selenium Python bindings using:
@@ -48,3 +48,4 @@ an example of the former and test_selenium.py for an example of the latter.
 
 Although test_selenium.py uses the Python binding for Selenium, any of the 
 Selenium webdriver clients should be usable with Marionette.
+
