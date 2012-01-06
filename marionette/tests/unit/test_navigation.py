@@ -45,6 +45,13 @@ class TestNavigate(MarionetteTestCase):
         self.assertNotEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
         self.assertEqual("Marionette Test", self.marionette.execute_script("return window.document.title;"))
 
+    def test_getUrl(self):
+        test_html = self.marionette.absolute_url("test.html")
+        self.marionette.navigate(test_html)
+        self.assertTrue(test_html in self.marionette.get_url())
+        self.marionette.navigate("about:blank")
+        self.assertEqual("about:blank", self.marionette.get_url())
+
     def test_goBack(self):
         self.assertTrue(self.marionette.execute_script("window.location.href = 'about:blank'; return true;"))
         self.assertEqual("about:blank", self.marionette.execute_script("return window.location.href;"))
