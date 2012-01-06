@@ -83,13 +83,13 @@ def run_test(test, marionette, revision=None, autolog=False):
     if suite.countTestCases():
         results = MarionetteTestRunner(verbosity=3).run(suite)
         if autolog:
-            from mozautolog import RESTfulAutologTestGroup
             report_results(results, revision, elapsedtime)
 
 # The results are the TextTestResults object. Let's go push these to autolog
 def report_results(results, revision, elapsedtime):
     # This is all autolog stuff.
     # See: https://wiki.mozilla.org/Auto-tools/Projects/Autolog
+    from mozautolog import RESTfulAutologTestGroup
     testgroup = RESTfulAutologTestGroup(
         testgroup = 'marionette',
         os = 'android',

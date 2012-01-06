@@ -2,6 +2,7 @@
 # then on detecting a build, it will run the tests
 # using that build.
 
+import logging
 import os
 import sys
 import traceback
@@ -143,6 +144,7 @@ def main():
     logger = mozlog.getLogger("B2G_AUTOMATION", options.logfile)
     if options.loglevel:
         logger.setLevel(getattr(mozlog, options.loglevel, "DEBUG"))
+    logger.addHandler(logging.StreamHandler())
 
     try:
         b2gauto = B2GAutomation(options.testmanifest, offline=options.offline)
