@@ -79,10 +79,12 @@ class MarionetteTestCase(CommonTestCase):
         CommonTestCase.__init__(self, methodName)
 
     def setUp(self):
-        self.marionette.start_session()
+        if self.marionette.session is None:
+            self.marionette.start_session()
 
     def tearDown(self):
-        self.marionette.delete_session()
+        if self.marionette.session is not None:
+            self.marionette.delete_session()
 
 
 class MarionetteJSTestCase(CommonTestCase):
