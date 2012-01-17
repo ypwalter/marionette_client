@@ -21,21 +21,18 @@ class CommonTestCase(unittest.TestCase):
     def __init__(self, methodName):
         unittest.TestCase.__init__(self, methodName)
 
-    def launch_gaia_app(self, url):
+    def kill_gaia_apps(self):
         # shut down any running Gaia apps
         app_count = self.marionette.execute_script("""
-var apps = [];
 var runningApps = window.wrappedJSObject.Gaia.AppManager._runningApps;
 runningApps.forEach(function(app) { 
     window.wrappedJSObject.Gaia.AppManager.kill(app.url);
 });
-for (var i in runningApps) {
-    apps.push(runningApps[i].url);
-}
-return apps.length;
+return runningApps.length;
 """)
         self.assertEqual(app_count, 0)
 
+    def launch_gaia_app(self, url):
         # launch the app using Gaia's AppManager
         self.marionette.execute_script("""
 window.wrappedJSObject.Gaia.AppManager.launch("%s");
@@ -71,20 +68,22 @@ setTimeout(checkframes, 0);
         self.assertTrue(isinstance(frame, HTMLElement))
         return frame
 
+    def setUp(self):
+        if self.marionette.session is None:
+            self.marionette.start_session()
+        if self.marionette.b2g:
+            self.kill_gaia_apps()
+
+    def tearDown(self):
+        if self.marionette.session is not None:
+            self.marionette.delete_session()
+
 
 class MarionetteTestCase(CommonTestCase):
 
     def __init__(self, marionette, methodName='runTest'):
         self.marionette = marionette
         CommonTestCase.__init__(self, methodName)
-
-    def setUp(self):
-        if self.marionette.session is None:
-            self.marionette.start_session()
-
-    def tearDown(self):
-        if self.marionette.session is not None:
-            self.marionette.delete_session()
 
 
 class MarionetteJSTestCase(CommonTestCase):
