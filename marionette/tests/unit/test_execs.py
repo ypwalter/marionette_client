@@ -50,7 +50,7 @@ class TestExecuteContent(MarionetteTestCase):
             """)
 
     def test_execute_no_return(self):
-        self.assertRaises(MarionetteException, self.marionette.execute_script, "1;")
+        self.assertEqual(self.marionette.execute_script("1;"), None)
 
     def test_execute_js_exception(self):
         self.assertRaises(JavascriptException,
