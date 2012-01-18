@@ -254,11 +254,27 @@ class Marionette(object):
         response = self._send_message('refresh', 'ok')
         return response
 
+    def wrapArguments(self, args):
+        if isinstance(args, list):
+            wrapped = []
+            for arg in args:
+                wrapped.append(self.wrapArguments(arg))
+        elif isinstance(args, dict):
+            wrapped = {}
+            for arg in args:
+                wrapped[arg] = self.wrapArguments(args[arg])
+        elif type(args) == HTMLElement:
+            wrapped = {'ELEMENT': args.id }
+        elif (isinstance(args, bool) or isinstance(args, basestring) or
+              isinstance(args, int) or args is None):
+            wrapped = args
+
+        return wrapped
+
     def execute_js_script(self, script, script_args=None, timeout=True):
         if script_args is None:
             script_args = []
-        args = [{'ELEMENT': arg.id} if type(arg) == 
-                HTMLElement else arg for arg in script_args]
+        args = self.wrapArguments(script_args)
         response = self._send_message('executeJSScript',
                                       'value',
                                       value=script,
@@ -271,7 +287,7 @@ class Marionette(object):
     def execute_script(self, script, script_args=None):
         if script_args is None:
             script_args = []
-        args = [{'ELEMENT': arg.id} if type(arg) == HTMLElement else arg for arg in script_args]
+        args = self.wrapArguments(script_args)
         response = self._send_message('executeScript', 'value', value=script, args=args)
         if type(response) == dict and response.has_key('ELEMENT'):
             response = HTMLElement(self, response['ELEMENT'])
@@ -280,7 +296,7 @@ class Marionette(object):
     def execute_async_script(self, script, script_args=None):
         if script_args is None:
             script_args = []
-        args = [{'ELEMENT': arg.id} if type(arg) == HTMLElement else arg for arg in script_args]
+        args = self.wrapArguments(script_args)
         response = self._send_message('executeAsyncScript', 'value', value=script, args=args)
         if type(response) == dict and response.has_key('ELEMENT'):
             response = HTMLElement(self, response['ELEMENT'])
