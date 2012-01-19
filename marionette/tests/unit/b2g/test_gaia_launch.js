@@ -7,11 +7,11 @@ MARIONETTE_LAUNCH_APP = '../sms/sms.html';
 MARIONETTE_TIMEOUT = 1000;
 
 /*
- * Verify that the <header> element of the content loaded in the 
- * iframe contains an <h1> element with the text 'SMS'.
+ * Verify that the <title> element of the content loaded in the 
+ * iframe contains the text 'SMS'.
  */
 var frame = Marionette.namedArgs.appframe;
-Marionette.is('SMS', frame.contentWindow.document.getElementsByTagName('header')[0].getElementsByTagName('h1')[0].innerHTML);
+Marionette.is('SMS', frame.contentWindow.document.getElementsByTagName('title')[0].innerHTML);
 
 /* more tests here.... */
 
