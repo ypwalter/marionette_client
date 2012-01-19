@@ -178,8 +178,7 @@ if __name__ == "__main__":
                        homedir=options.homedir,
                        baseurl=hoststr)
     else:
-        m = None
-        #raise Exception("must specify --address or --emulator")
+        raise Exception("must specify --address or --emulator")
 
     for test in tests:
         run_test(test, m, autolog=options.autolog)

@@ -66,6 +66,16 @@ class TestExecuteContent(MarionetteTestCase):
     def test_execute_permission(self):
         self.assertRaises(JavascriptException, self.marionette.execute_script, "return Components.classes;")
 
+    def test_complex_return_values(self):
+        self.assertEqual(self.marionette.execute_script("return [1, 2];"), [1, 2])
+        self.assertEqual(self.marionette.execute_script("return {'foo': 'bar', 'fizz': 'fazz'};"),
+                         {'foo': 'bar', 'fizz': 'fazz'})
+        self.assertEqual(self.marionette.execute_script("return [1, {'foo': 'bar'}, 2];"),
+                         [1, {'foo': 'bar'}, 2])
+        self.assertEqual(self.marionette.execute_script("return {'foo': [1, 'a', 2]};"),
+                         {'foo': [1, 'a', 2]})
+
+
 class TestExecuteChrome(TestExecuteContent):
     def setUp(self):
         super(TestExecuteChrome, self).setUp()

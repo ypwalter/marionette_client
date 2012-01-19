@@ -271,6 +271,23 @@ class Marionette(object):
 
         return wrapped
 
+    def unwrapValue(self, value):
+        if isinstance(value, list):
+            unwrapped = []
+            for item in value:
+                unwrapped.append(self.unwrapValue(item))
+        elif isinstance(value, dict):
+            unwrapped = {}
+            for key in value:
+                if key == 'ELEMENT':
+                    unwrapped = HTMLElement(self, value[key])
+                else:
+                    unwrapped[key] = self.unwrapValue(value[key])
+        else:
+            unwrapped = value
+
+        return unwrapped
+
     def execute_js_script(self, script, script_args=None, timeout=True):
         if script_args is None:
             script_args = []
@@ -280,27 +297,21 @@ class Marionette(object):
                                       value=script,
                                       args=args,
                                       timeout=timeout)
-        if type(response) == dict and response.has_key('ELEMENT'):
-            response = HTMLElement(self, response['ELEMENT'])
-        return response
+        return self.unwrapValue(response)
 
     def execute_script(self, script, script_args=None):
         if script_args is None:
             script_args = []
         args = self.wrapArguments(script_args)
         response = self._send_message('executeScript', 'value', value=script, args=args)
-        if type(response) == dict and response.has_key('ELEMENT'):
-            response = HTMLElement(self, response['ELEMENT'])
-        return response
+        return self.unwrapValue(response)
 
     def execute_async_script(self, script, script_args=None):
         if script_args is None:
             script_args = []
         args = self.wrapArguments(script_args)
         response = self._send_message('executeAsyncScript', 'value', value=script, args=args)
-        if type(response) == dict and response.has_key('ELEMENT'):
-            response = HTMLElement(self, response['ELEMENT'])
-        return response
+        return self.unwrapValue(response)
 
     def find_element(self, method, target, id=None):
         kwargs = { 'value': target, 'using': method }
