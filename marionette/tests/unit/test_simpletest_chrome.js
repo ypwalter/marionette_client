@@ -1,4 +1,5 @@
 MARIONETTE_TIMEOUT = 1000;
+MARIONETTE_CONTEXT = 'chrome';
 
 Marionette.is(1, 1, "test for Marionette.is()");
 is(2, 2, "test for is()");
