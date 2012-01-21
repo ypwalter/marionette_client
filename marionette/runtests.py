@@ -1,4 +1,5 @@
 import imp
+import inspect
 from optparse import OptionParser
 import os
 import types
@@ -23,6 +24,22 @@ from marionette_test import MarionetteJSTestCase
 
 class MarionetteTestResult(unittest._TextTestResult):
 
+    def __init__(self, *args):
+        super(MarionetteTestResult, self).__init__(*args)
+        self.passed = 0
+
+    def addSuccess(self, test):
+        super(MarionetteTestResult, self).addSuccess(test)
+        self.passed += 1
+
+    def getInfo(self, test):
+        if hasattr(test, 'jsFile'):
+            return os.path.basename(test.jsFile)
+        else:
+            return '%s.py:%s.%s' % (test.__class__.__module__,
+                                    test.__class__.__name__,
+                                    test._testMethodName)
+
     def getDescription(self, test):
         doc_first_line = test.shortDescription()
         if self.descriptions and doc_first_line:
@@ -34,106 +51,156 @@ class MarionetteTestResult(unittest._TextTestResult):
             return desc
 
 
-class MarionetteTestRunner(unittest.TextTestRunner):
+class MarionetteTextTestRunner(unittest.TextTestRunner):
 
     resultclass = MarionetteTestResult
 
 
-def run_test(test, marionette, revision=None, autolog=False):
-    filepath = os.path.join(os.path.dirname(__file__), test)
+class MarionetteTestRunner(object):
 
-    if os.path.isdir(filepath):
-        for root, dirs, files in os.walk(filepath):
-            for filename in files:
-                if filename.startswith('test_') and (filename.endswith('.py') or
-                                                     filename.endswith('.js')):
-                    filepath = os.path.join(root, filename)
-                    run_test(filepath, marionette)
-        return
+    def __init__(self, address=None, emulator=False, homedir=None,
+                 autolog=False, revision=None):
+        self.address = address
+        self.emulator = emulator
+        self.homedir = homedir
+        self.autolog = autolog
+        self.revision = revision
+        self.httpd = None
+        self.baseurl = None
+        self.marionette = None
+        self.passed = 0
+        self.failed = 0
+        self.todo = 0
+        self.failures = []
 
-    mod_name,file_ext = os.path.splitext(os.path.split(filepath)[-1])
+    def start_httpd(self):
+        host = iface.get_lan_ip()
+        port = 8765
+        self.baseurl = 'http://%s:%d/' % (host, port)
+        print 'running webserver on', self.baseurl
+        self.httpd = MozHttpd(host=host,
+                              port=port,
+                              docroot=os.path.join(os.path.dirname(__file__), 'www'))
+        self.httpd.start()
 
-    testloader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-    timestart = datetime.utcnow()
+    def start_marionette(self):
+        assert(self.baseurl is not None)
+        if self.address:
+            host, port = self.address.split(':')
+            if self.emulator:
+                self.marionette = Marionette(host=host, port=int(port),
+                                            connectToRunningEmulator=True,
+                                            homedir=self.homedir,
+                                            baseurl=self.baseurl)
+            else:
+                self.marionette = Marionette(host=host, port=int(port), baseurl=self.baseurl)
+        elif self.emulator:
+            self.marionette = Marionette(emulator=True,
+                                         homedir=self.homedir,
+                                         baseurl=self.baseurl)
+        else:
+            raise Exception("must specify address or emulator")
 
-    if file_ext == '.ini':
-        manifest = TestManifest()
-        manifest.read(filepath)
-        for i in manifest.get():
-            run_test(i["path"], marionette)
-        return
+    def post_to_autolog(self, elapsedtime):
+        # This is all autolog stuff.
+        # See: https://wiki.mozilla.org/Auto-tools/Projects/Autolog
+        from mozautolog import RESTfulAutologTestGroup
+        testgroup = RESTfulAutologTestGroup(
+            testgroup = 'marionette',
+            os = 'android',
+            platform = 'emulator',
+            harness = 'marionette',
+            machine = socket.gethostname())
 
-    if file_ext == '.py':
-        test_mod = imp.load_source(mod_name, filepath)
+        testgroup.set_primary_product(
+            tree = 'b2g',
+            buildtype = 'opt',
+            revision = self.revision)
 
-        for name in dir(test_mod):
-            obj = getattr(test_mod, name)
-            if (isinstance(obj, (type, types.ClassType)) and
-                issubclass(obj, unittest.TestCase)):
-                testnames = testloader.getTestCaseNames(obj)
-                for testname in testnames:
-                    suite.addTest(obj(marionette, methodName=testname))
+        testgroup.add_test_suite(
+            testsuite = 'b2g emulator testsuite',
+            elapsedtime = elapsedtime.total_seconds(),
+            cmdline = '',
+            passed = self.passed,
+            failed = self.failed,
+            todo = self.todo)
 
-    elif file_ext == '.js':
-        suite.addTest(MarionetteJSTestCase(marionette, jsFile=filepath))
+        # Add in the test failures.
+        for f in self.failures:
+            testgroup.add_test_failure(test=f[0], text=f[1])
 
-    # XXX fixme: elapsedtime shoudl be calculated after tests are run
-    elapsedtime = datetime.utcnow() - timestart
-    if suite.countTestCases():
-        results = MarionetteTestRunner(verbosity=3).run(suite)
-        if autolog:
-            report_results(results, revision, elapsedtime)
+        testgroup.submit()
 
-# The results are the TextTestResults object. Let's go push these to autolog
-def report_results(results, revision, elapsedtime):
-    # This is all autolog stuff.
-    # See: https://wiki.mozilla.org/Auto-tools/Projects/Autolog
-    from mozautolog import RESTfulAutologTestGroup
-    testgroup = RESTfulAutologTestGroup(
-        testgroup = 'marionette',
-        os = 'android',
-        platform = 'emulator',
-        harness = 'marionette',
-        machine = socket.gethostname())
+    def run_tests(self, tests):
+        starttime = datetime.utcnow()
+        for test in tests:
+            self.run_test(test)
+        print '\nSUMMARY'
+        print 'passed:', self.passed
+        print 'failed:', self.failed
+        print 'todo:', self.todo
+        elapsedtime = datetime.utcnow() - starttime
+        if self.autolog:
+            self.post_to_autolog(elapsedtime)
 
-    testgroup.set_primary_product(
-        tree = 'b2g',
-        buildtype = 'opt',
-        revision = revision)
+    def run_test(self, test):
+        if not self.httpd:
+            self.start_httpd()
+        if not self.marionette:
+            self.start_marionette()
+        print 'running', test
 
-    # Results don't have a passed count, calc it
-    # We map expected failures and skips as todos
-    # We add failures and errors together as failures
-    failures = len(results.failures) + len(results.errors) + len(results.unexpectedSuccesses)
-    todo = len(results.skipped) + len(results.expectedFailures)
-    passes = results.testsRun - (failures + todo)
+        filepath = os.path.join(os.path.dirname(__file__), test)
 
-    testgroup.add_test_suite(
-        testsuite = 'b2g emulator testsuite',
-        elapsedtime = elapsedtime.total_seconds(),
-        cmdline = '',
-        passed = passes,
-        failed = failures,
-        todo = todo,
-        id = 'b2g-%s-%s' % (socket.gethostname(), revision))
+        if os.path.isdir(filepath):
+            for root, dirs, files in os.walk(filepath):
+                for filename in files:
+                    if filename.startswith('test_') and (filename.endswith('.py') or
+                                                         filename.endswith('.js')):
+                        filepath = os.path.join(root, filename)
+                        self.run_test(filepath)
+            return
 
-    # Add in the test failures.  We can't track passes
-    # since python doesn't really keep details on that
-    for f in results.failures:
-        testgroup.add_test_failure(
-            test=f[0].id(),
-            traceback = f[1])
-    for e in results.errors:
-        testgroup.add_test_failure(
-            test = e[0].id(),
-            traceback = e[1])
-    for u in results.unexpectedSuccesses:
-        testgroup.add_test_failure(
-            test = u[0].id(),
-            traceback = u[1])
+        mod_name,file_ext = os.path.splitext(os.path.split(filepath)[-1])
 
-    testgroup.submit()
+        testloader = unittest.TestLoader()
+        suite = unittest.TestSuite()
+
+        if file_ext == '.ini':
+            manifest = TestManifest()
+            manifest.read(filepath)
+            for i in manifest.get():
+                self.run_test(i["path"])
+            return
+
+        if file_ext == '.py':
+            test_mod = imp.load_source(mod_name, filepath)
+
+            for name in dir(test_mod):
+                obj = getattr(test_mod, name)
+                if (isinstance(obj, (type, types.ClassType)) and
+                    issubclass(obj, unittest.TestCase)):
+                    testnames = testloader.getTestCaseNames(obj)
+                    for testname in testnames:
+                        suite.addTest(obj(self.marionette, methodName=testname))
+
+        elif file_ext == '.js':
+            suite.addTest(MarionetteJSTestCase(self.marionette, jsFile=filepath))
+
+        if suite.countTestCases():
+            results = MarionetteTextTestRunner(verbosity=3).run(suite)
+            self.failed += len(results.failures) + len(results.errors) + len(results.unexpectedSuccesses)
+            self.todo += len(results.skipped) + len(results.expectedFailures)
+            self.passed += results.passed
+            for failure in results.failures + results.errors + results.unexpectedSuccesses:
+                self.failures.append((results.getInfo(failure[0]), failure[1]))
+
+    def cleanup(self):
+        if self.httpd:
+            self.httpd.stop()
+
+    __del__ = cleanup
+
 
 if __name__ == "__main__":
     parser = OptionParser(usage='%prog [options] test_file_or_dir <test_file_or_dir> ...')
@@ -155,34 +222,16 @@ if __name__ == "__main__":
         parser.print_usage()
         parser.exit()
 
-    host = iface.get_lan_ip()
-    port = 8765
-    hoststr = 'http://%s:%d/' % (host, port)
-    print 'running webserver on', hoststr
-    httpd = MozHttpd(host=host,
-                     port=port,
-                     docroot=os.path.join(os.getcwd(), 'www'))
-    httpd.start()
+    if not options.emulator and not options.address:
+        parser.print_usage()
+        print "must specify --emulator or --address"
+        parser.exit()
 
-    if options.address:
-        host, port = options.address.split(':')
-        if options.emulator:
-            m = Marionette(host=host, port=int(port),
-                           connectToRunningEmulator=True,
-                           homedir=options.homedir,
-                           baseurl=hoststr)
-        else:
-            m = Marionette(host=host, port=int(port), baseurl=hoststr)
-    elif options.emulator:
-        m = Marionette(emulator=True,
-                       homedir=options.homedir,
-                       baseurl=hoststr)
-    else:
-        raise Exception("must specify --address or --emulator")
+    runner = MarionetteTestRunner(address=options.address,
+                                  emulator=options.emulator,
+                                  homedir=options.homedir,
+                                  autolog=options.autolog)
+    runner.run_tests(tests)
 
-    for test in tests:
-        run_test(test, m, autolog=options.autolog)
-
-    httpd.stop()
 
 
