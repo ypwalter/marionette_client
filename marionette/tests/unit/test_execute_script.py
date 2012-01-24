@@ -43,12 +43,6 @@ class TestExecuteContent(MarionetteTestCase):
     def test_check_window(self):
         self.assertTrue(self.marionette.execute_script("return (window !=null && window != undefined);"))
 
-    def test_same_context(self):
-        var1 = self.marionette.execute_script("""
-            window.wrappedJSObject._testvar = 'testing';
-            return window.wrappedJSObject._testvar;
-            """)
-
     def test_execute_no_return(self):
         self.assertEqual(self.marionette.execute_script("1;"), None)
 
@@ -56,15 +50,10 @@ class TestExecuteContent(MarionetteTestCase):
         self.assertRaises(JavascriptException,
             self.marionette.execute_script, "return foo(bar);")
 
-    def test_execute_async_js_exception(self):
-        self.assertRaises(JavascriptException,
-            self.marionette.execute_async_script, """
-            var callback = arguments[arguments.length - 1];
-            callback(foo());
-            """)
-        
     def test_execute_permission(self):
-        self.assertRaises(JavascriptException, self.marionette.execute_script, "return Components.classes;")
+        self.assertRaises(JavascriptException,
+                          self.marionette.execute_script,
+                          "return Components.classes;")
 
     def test_complex_return_values(self):
         self.assertEqual(self.marionette.execute_script("return [1, 2];"), [1, 2])
@@ -84,5 +73,3 @@ class TestExecuteChrome(TestExecuteContent):
     def test_execute_permission(self):
         self.assertEqual(1, self.marionette.execute_script("var c = Components.classes;return 1;"))
 
-    def test_same_context(self):
-        pass
