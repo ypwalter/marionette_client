@@ -59,12 +59,15 @@ class MarionetteTextTestRunner(unittest.TextTestRunner):
 class MarionetteTestRunner(object):
 
     def __init__(self, address=None, emulator=False, homedir=None,
-                 autolog=False, revision=None):
+                 autolog=False, revision=None, es_server=None,
+                 rest_server=None):
         self.address = address
         self.emulator = emulator
         self.homedir = homedir
         self.autolog = autolog
         self.revision = revision
+        self.es_server = es_server
+        self.rest_server = rest_server
         self.httpd = None
         self.baseurl = None
         self.marionette = None
@@ -110,6 +113,8 @@ class MarionetteTestRunner(object):
             os = 'android',
             platform = 'emulator',
             harness = 'marionette',
+            server = self.es_server,
+            restserver = self.rest_server,
             machine = socket.gethostname())
 
         testgroup.set_primary_product(
@@ -127,7 +132,7 @@ class MarionetteTestRunner(object):
 
         # Add in the test failures.
         for f in self.failures:
-            testgroup.add_test_failure(test=f[0], text=f[1])
+            testgroup.add_test_failure(test=f[0], text=f[1], status=f[2])
 
         testgroup.submit()
 
@@ -192,8 +197,10 @@ class MarionetteTestRunner(object):
             self.failed += len(results.failures) + len(results.errors) + len(results.unexpectedSuccesses)
             self.todo += len(results.skipped) + len(results.expectedFailures)
             self.passed += results.passed
-            for failure in results.failures + results.errors + results.unexpectedSuccesses:
-                self.failures.append((results.getInfo(failure[0]), failure[1]))
+            for failure in results.failures + results.errors:
+                self.failures.append((results.getInfo(failure[0]), failure[1], 'TEST-UNEXPECTED-FAIL'))
+            for failure in results.unexpectedSuccesses:
+                self.failures.append((results.getInfo(failure[0]), failure[1], 'TEST-UNEXPECTED-PASS'))
 
     def cleanup(self):
         if self.httpd:

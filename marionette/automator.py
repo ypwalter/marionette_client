@@ -2,6 +2,7 @@
 # then on detecting a build, it will run the tests
 # using that build.
 
+import ConfigParser
 import logging
 import os
 import sys
@@ -12,7 +13,7 @@ import shutil
 from optparse import OptionParser
 from threading import Thread
 from manifestparser import TestManifest
-from runtests import run_test
+from runtests import MarionetteTestRunner
 from marionette import Marionette
 from mozinstall import install
 
@@ -28,21 +29,27 @@ class B2GPulseConsumer(GenericConsumer):
 
 
 class B2GAutomation:
-    def __init__(self, test_manifest, offline=False):
+    def __init__(self, test_manifest, testmode=False,
+                 es_server=None, rest_server=None):
         self.logger = mozlog.getLogger('B2G_AUTOMATION')
         self.testlist = self.get_test_list(test_manifest)
         print "Testlist: %s" % self.testlist
-        self.offline = offline
+        self.testmode = testmode
+        self.es_server = es_server
+        self.rest_server = rest_server
 
         pulse = B2GPulseConsumer(applabel='b2g_build_listener')
         pulse.configure(topic='#', callback=self.on_build)
 
-        if not offline:
+        if not testmode:
             pulse.listen()
         else:
             t = Thread(target=pulse.listen)
             t.daemon = True
             t.start()
+            data = {'payload': {'buildurl': 'http://localhost/qemu_package.tar.gz',
+                                'commit': 'dd4ecd1ebd2ccbfb90cfdcc654addccfce695c7e'} }
+            self.on_build(data, None)
 
     def get_test_list(self, manifest):
         self.logger.info("Reading test manifest: %s" % manifest)
@@ -62,14 +69,15 @@ class B2GAutomation:
         # Found marionette build! Install it
         print "Found build %s" % data 
         if "buildurl" in data["payload"]:
-            dir = self.install_build(data["payload"]["buildurl"])
+            directory = self.install_build(data['payload']['buildurl'])
             rev = data["payload"]["commit"]
-            if dir == None:
+            if directory == None:
                 self.logger.info("Failed to return build directory")
-            self.run_marionette(dir, rev)
-            self.cleanup(dir)
+            else:
+                self.run_marionette(directory, rev)
+                self.cleanup(directory)
         else:
-            self.logger.error("Fail to find buildurl in msg not running test")
+            self.logger.error("Failed to find buildurl in msg, not running test")
 
     # Download the build and untar it, return the directory it untared to
     def install_build(self, url):
@@ -78,21 +86,24 @@ class B2GAutomation:
             buildfile = os.path.abspath("b2gtarball.tar.gz")
             urllib.urlretrieve(url, buildfile)
         except:
-            self.logger.error("Failed to download build: %s %s" % sys.exc_info()[:2])
+            self.logger.exception("Failed to download build")
 
         try:
             self.logger.info("Untarring build")
             # Extract to the same local directory where we downloaded the build
             # to.  This defaults to the local directory where our script runs
-            dest = os.path.dirname(buildfile)
+            dest = os.path.join(os.path.dirname(buildfile), 'downloadedbuild')
+            if (os.access(dest, os.F_OK)):
+                shutil.rmtree(dest)
             install(buildfile, dest)
             # This should extract into a qemu directory
-            if os.path.exists("qemu"):
-                return os.path.abspath("qemu")
+            qemu = os.path.join(dest, 'qemu')
+            if os.path.exists(qemu):
+                return qemu
             else:
                 return None
         except:
-            self.logger.error("Failed to untar file: %s %s" % sys.exc_info()[:2])
+            self.logger.exception("Failed to untar file")
         return None
 
 
@@ -101,7 +112,9 @@ class B2GAutomation:
         runner = MarionetteTestRunner(emulator=True,
                                       homedir=dir,
                                       autolog=True,
-                                      revision=rev)
+                                      revision=rev,
+                                      es_server=self.es_server,
+                                      rest_server=self.rest_server)
         runner.run_tests(self.testlist)
 
     def cleanup(self, dir):
@@ -113,10 +126,15 @@ class B2GAutomation:
 
 def main():
     parser = OptionParser(usage="%prog <options>")
-    parser.add_option("--offline", action="store_true", dest="offline",
-                      default = False, help = "Start without using pulse")
+    parser.add_option("--config", action="store", dest="config_file",
+                      default="automation.conf",
+                      help="Specify the configuration file")
+    parser.add_option("--testmode", action="store_true", dest="testmode",
+                      default = False,
+                      help = "Start in test mode without using pulse, "
+                      "utilizing a tarball at http://localhost/qemu_package.tar.gz")
     parser.add_option("--test-manifest", action="store", dest="testmanifest",
-                      default = os.path.join("tests","all-tests.ini"),
+                      default = os.path.join("tests","unit-tests-b2g.ini"),
                       help="Specify the test manifest, defaults to tests/all-tests.ini")
     parser.add_option("--log-file", action="store", dest="logfile",
                       default="b2gautomation.log",
@@ -128,6 +146,19 @@ def main():
                       dest="loglevel", default="DEBUG", choices=LOG_LEVELS,
                       help = "One of %s for logging level, defaults  to debug" % LEVEL_STRING)
     options, args = parser.parse_args()
+
+    cfg = ConfigParser.ConfigParser()
+    cfg.read(options.config_file)
+    try:
+        es_server = cfg.get('marionette', 'es_server')
+    except:
+        # let mozautolog provide the default
+        es_server = None
+    try:
+        rest_server = cfg.get('marionette', 'rest_server')
+    except:
+        # let mozautolog provide the default
+        rest_server = None
 
     if not options.testmanifest:
         parser.print_usage()
@@ -148,10 +179,10 @@ def main():
     logger.addHandler(logging.StreamHandler())
 
     try:
-        b2gauto = B2GAutomation(options.testmanifest, offline=options.offline)
-        # this is test code, only executed if you run with --offline
-        #d = b2gauto.install_build("http://10.242.30.20/out/qemu_package.tar.gz")
-        #b2gauto.run_marionette(d)
+        b2gauto = B2GAutomation(options.testmanifest,
+                                testmode=options.testmode,
+                                es_server=es_server,
+                                rest_server=rest_server)
     except:
         s = traceback.format_exc()
         logger.error(s)
