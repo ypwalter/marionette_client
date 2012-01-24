@@ -63,20 +63,23 @@ class TestExecuteAsyncContent(MarionetteTestCase):
         self.assertRaises(JavascriptException, self.marionette.execute_async_script, unload)
 
     def test_check_window(self):
-        self.assertTrue(self.marionette.execute_script("return (window !=null && window != undefined);"))
+        self.assertTrue(self.marionette.execute_async_script("marionetteScriptFinished(window !=null && window != undefined);"))
 
     def test_same_context(self):
-        var1 = self.marionette.execute_script("""
-            window.wrappedJSObject._testvar = 'testing';
+        var1 = 'testing'
+        self.assertEqual(self.marionette.execute_script("""
+            window.wrappedJSObject._testvar = '%s';
             return window.wrappedJSObject._testvar;
-            """)
+            """ % var1), var1)
+        self.assertEqual(self.marionette.execute_async_script(
+            "marionetteScriptFinished(window.wrappedJSObject._testvar);"), var1)
 
     def test_execute_no_return(self):
-        self.assertEqual(self.marionette.execute_script("1;"), None)
+        self.assertEqual(self.marionette.execute_async_script("marionetteScriptFinished()"), None)
 
     def test_execute_js_exception(self):
         self.assertRaises(JavascriptException,
-            self.marionette.execute_script, "return foo(bar);")
+            self.marionette.execute_async_script, "foo(bar);")
 
     def test_execute_async_js_exception(self):
         self.assertRaises(JavascriptException,
@@ -91,7 +94,10 @@ class TestExecuteAsyncContent(MarionetteTestCase):
             """))
 
     def test_execute_permission(self):
-        self.assertRaises(JavascriptException, self.marionette.execute_script, "var c = Components.classes;return 1")
+        self.assertRaises(JavascriptException, self.marionette.execute_async_script, """
+var c = Components.classes;
+marionetteScriptFinished(1);
+""")
 
 class TestExecuteAsyncChrome(TestExecuteAsyncContent):
     def setUp(self):
@@ -101,12 +107,12 @@ class TestExecuteAsyncChrome(TestExecuteAsyncContent):
     def test_execute_async_unload(self):
         pass
 
-    def test_check_window(self):
-        pass
-
     def test_same_context(self):
         pass
 
     def test_execute_permission(self):
-        self.assertEqual(1, self.marionette.execute_script("var c = Components.classes;return 1"))
+        self.assertEqual(1, self.marionette.execute_async_script("""
+var c = Components.classes;
+marionetteScriptFinished(1);
+"""))
 
