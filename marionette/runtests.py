@@ -56,6 +56,9 @@ class MarionetteTextTestRunner(unittest.TextTestRunner):
 
     resultclass = MarionetteTestResult
 
+    def _makeResult(self):
+        return self.resultclass(self.stream, self.descriptions, self.verbosity)
+
 
 class MarionetteTestRunner(object):
 
