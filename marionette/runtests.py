@@ -1,5 +1,6 @@
 import imp
 import inspect
+import logging
 from optparse import OptionParser
 import os
 import types
@@ -60,7 +61,7 @@ class MarionetteTestRunner(object):
 
     def __init__(self, address=None, emulator=False, homedir=None,
                  autolog=False, revision=None, es_server=None,
-                 rest_server=None):
+                 rest_server=None, logger=None):
         self.address = address
         self.emulator = emulator
         self.homedir = homedir
@@ -68,6 +69,7 @@ class MarionetteTestRunner(object):
         self.revision = revision
         self.es_server = es_server
         self.rest_server = rest_server
+        self.logger = logger
         self.httpd = None
         self.baseurl = None
         self.marionette = None
@@ -76,11 +78,16 @@ class MarionetteTestRunner(object):
         self.todo = 0
         self.failures = []
 
+        if self.logger is None:
+            self.logger = logging.getLogger('Marionette')
+            self.logger.setLevel(logging.INFO)
+            self.logger.addHandler(logging.StreamHandler())
+
     def start_httpd(self):
         host = iface.get_lan_ip()
         port = 8765
         self.baseurl = 'http://%s:%d/' % (host, port)
-        print 'running webserver on', self.baseurl
+        self.logger.info('running webserver on %s' % self.baseurl)
         self.httpd = MozHttpd(host=host,
                               port=port,
                               docroot=os.path.join(os.path.dirname(__file__), 'www'))
@@ -105,6 +112,8 @@ class MarionetteTestRunner(object):
             raise Exception("must specify address or emulator")
 
     def post_to_autolog(self, elapsedtime):
+        self.logger.info('posting results to autolog')
+
         # This is all autolog stuff.
         # See: https://wiki.mozilla.org/Auto-tools/Projects/Autolog
         from mozautolog import RESTfulAutologTestGroup
@@ -140,10 +149,10 @@ class MarionetteTestRunner(object):
         starttime = datetime.utcnow()
         for test in tests:
             self.run_test(test)
-        print '\nSUMMARY'
-        print 'passed:', self.passed
-        print 'failed:', self.failed
-        print 'todo:', self.todo
+        self.logger.info('\nSUMMARY\n-------')
+        self.logger.info('passed: %d' % self.passed)
+        self.logger.info('failed: %d' % self.failed)
+        self.logger.info('todo: %d' % self.todo)
         elapsedtime = datetime.utcnow() - starttime
         if self.autolog:
             self.post_to_autolog(elapsedtime)
@@ -153,7 +162,6 @@ class MarionetteTestRunner(object):
             self.start_httpd()
         if not self.marionette:
             self.start_marionette()
-        print 'running', test
 
         filepath = os.path.join(os.path.dirname(__file__), test)
 
@@ -177,6 +185,8 @@ class MarionetteTestRunner(object):
             for i in manifest.get():
                 self.run_test(i["path"])
             return
+
+        self.logger.info('TEST-START %s' % os.path.basename(test))
 
         if file_ext == '.py':
             test_mod = imp.load_source(mod_name, filepath)

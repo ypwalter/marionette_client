@@ -33,15 +33,17 @@ class B2GAutomation:
                  es_server=None, rest_server=None):
         self.logger = mozlog.getLogger('B2G_AUTOMATION')
         self.testlist = self.get_test_list(test_manifest)
-        print "Testlist: %s" % self.testlist
         self.testmode = testmode
         self.es_server = es_server
         self.rest_server = rest_server
+
+        self.logger.info("Testlist: %s" % self.testlist)
 
         pulse = B2GPulseConsumer(applabel='b2g_build_listener')
         pulse.configure(topic='#', callback=self.on_build)
 
         if not testmode:
+            self.logger.info('waiting for pulse messages...')
             pulse.listen()
         else:
             t = Thread(target=pulse.listen)
@@ -67,7 +69,7 @@ class B2GAutomation:
 
     def on_build(self, data, msg):
         # Found marionette build! Install it
-        print "Found build %s" % data 
+        self.logger.info("got pulse message! %s" % repr(data))
         if "buildurl" in data["payload"]:
             directory = self.install_build(data['payload']['buildurl'])
             rev = data["payload"]["commit"]
@@ -113,6 +115,7 @@ class B2GAutomation:
                                       homedir=dir,
                                       autolog=True,
                                       revision=rev,
+                                      logger=self.logger,
                                       es_server=self.es_server,
                                       rest_server=self.rest_server)
         runner.run_tests(self.testlist)
