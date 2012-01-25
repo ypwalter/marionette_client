@@ -133,7 +133,7 @@ class MarionetteJSTestCase(CommonTestCase):
             else:
                 fails = []
                 for failure in results['failures']:
-                    diag = "" if failure['diag'] is None else "| %s " % failure['diag']
+                    diag = "" if failure.get('diag') is None else "| %s " % failure['diag']
                     name = "got false, expected true" if failure['name'] is None else failure['name']
                     fails.append('TEST-UNEXPECTED-FAIL %s| %s' % (diag, name))
                 self.assertEqual(0, results['failed'],
