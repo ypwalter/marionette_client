@@ -205,7 +205,9 @@ class MarionetteTestRunner(object):
         if suite.countTestCases():
             results = MarionetteTextTestRunner(verbosity=3).run(suite)
             self.failed += len(results.failures) + len(results.errors)
-            self.todo += len(results.skipped) + len(results.expectedFailures)
+            self.todo = 0
+            if hasattr(results, 'skipped'):
+                self.todo += len(results.skipped) + len(results.expectedFailures)
             self.passed += results.passed
             for failure in results.failures + results.errors:
                 self.failures.append((results.getInfo(failure[0]), failure[1], 'TEST-UNEXPECTED-FAIL'))
