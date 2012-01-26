@@ -11,7 +11,7 @@ import urllib
 import mozlog
 import shutil
 from optparse import OptionParser
-from threading import Thread
+from threading import Thread, RLock
 from manifestparser import TestManifest
 from runtests import MarionetteTestRunner
 from marionette import Marionette
@@ -36,6 +36,7 @@ class B2GAutomation:
         self.testmode = testmode
         self.es_server = es_server
         self.rest_server = rest_server
+        self.lock = RLock()
 
         self.logger.info("Testlist: %s" % self.testlist)
 
@@ -50,7 +51,7 @@ class B2GAutomation:
             t.daemon = True
             t.start()
             data = {'payload': {'buildurl': 'http://localhost/qemu_package.tar.gz',
-                                'commit': 'dd4ecd1ebd2ccbfb90cfdcc654addccfce695c7e'} }
+                                'commit': '1491e43e025fa0243e65d3f353cd6813137beee8'} }
             self.on_build(data, None)
 
     def get_test_list(self, manifest):
@@ -69,17 +70,25 @@ class B2GAutomation:
 
     def on_build(self, data, msg):
         # Found marionette build! Install it
-        self.logger.info("got pulse message! %s" % repr(data))
-        if "buildurl" in data["payload"]:
-            directory = self.install_build(data['payload']['buildurl'])
-            rev = data["payload"]["commit"]
-            if directory == None:
-                self.logger.info("Failed to return build directory")
+        self.lock.acquire()
+
+        try:
+            self.logger.info("got pulse message! %s" % repr(data))
+            if "buildurl" in data["payload"]:
+                directory = self.install_build(data['payload']['buildurl'])
+                rev = data["payload"]["commit"]
+                if directory == None:
+                    self.logger.info("Failed to return build directory")
+                else:
+                    self.run_marionette(directory, rev)
+                    self.cleanup(directory)
             else:
-                self.run_marionette(directory, rev)
-                self.cleanup(directory)
-        else:
-            self.logger.error("Failed to find buildurl in msg, not running test")
+                self.logger.error("Failed to find buildurl in msg, not running test")
+
+        except:
+            self.logger.exception("error while processing build")
+
+        self.lock.release()
 
     # Download the build and untar it, return the directory it untared to
     def install_build(self, url):
