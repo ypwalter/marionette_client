@@ -171,8 +171,8 @@ class MarionetteTestRunner(object):
         if os.path.isdir(filepath):
             for root, dirs, files in os.walk(filepath):
                 for filename in files:
-                    if filename.startswith('test_') and (filename.endswith('.py') or
-                                                         filename.endswith('.js')):
+                    if ((filename.startswith('test_') or filename.startswith('browser_')) and 
+                        (filename.endswith('.py') or filename.endswith('.js'))):
                         filepath = os.path.join(root, filename)
                         self.run_test(filepath)
             return

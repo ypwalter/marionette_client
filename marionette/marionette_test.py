@@ -105,6 +105,11 @@ class MarionetteJSTestCase(CommonTestCase):
         js = f.read()
         args = []
 
+        # if this is a browser_ test, prepend head.js to it
+        if os.path.basename(self.jsFile).startswith('browser_'):
+            head = open(os.path.join(os.path.dirname(__file__), 'tests', 'head.js'), 'r')
+            js = head.read() + js
+
         context = self.context_re.search(js)
         if context:
             context = context.group(3)
