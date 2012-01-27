@@ -162,6 +162,7 @@ class MarionetteTestRunner(object):
         if self.marionette.emulator:
             self.marionette.emulator.close()
             self.marionette.emulator = None
+        self.marionette = None
 
     def run_test(self, test):
         if not self.httpd:
