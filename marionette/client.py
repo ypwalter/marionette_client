@@ -83,6 +83,7 @@ class MarionetteClient(object):
             to receive in response.
         """
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(180.0)
         try:
             self.sock.connect((self.addr, self.port))
         except:

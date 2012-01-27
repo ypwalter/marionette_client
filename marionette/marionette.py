@@ -34,6 +34,8 @@
 # 
 # ***** END LICENSE BLOCK ***** 
 
+import socket
+
 from client import MarionetteClient
 from errors import *
 from emulator import Emulator
@@ -137,7 +139,13 @@ class Marionette(object):
         if kwargs:
             message.update(kwargs)
 
-        response = self.client.send(message)
+        try:
+            response = self.client.send(message)
+        except socket.timeout:
+            self.session = None
+            self.window = None
+            self.client.close()
+            raise TimeoutException(message='socket.timeout', status=21, stacktrace=None)
 
         if (response_key == 'ok' and response.get('ok') ==  True) or response_key in response:
             return response[response_key]
