@@ -29,11 +29,11 @@ class B2GPulseConsumer(GenericConsumer):
 
 
 class B2GAutomation:
-    def __init__(self, test_manifest, testmode=False,
+    def __init__(self, test_manifest, testfile=None,
                  es_server=None, rest_server=None):
         self.logger = mozlog.getLogger('B2G_AUTOMATION')
         self.testlist = self.get_test_list(test_manifest)
-        self.testmode = testmode
+        self.testfile = testfile
         self.es_server = es_server
         self.rest_server = rest_server
         self.lock = RLock()
@@ -43,15 +43,15 @@ class B2GAutomation:
         pulse = B2GPulseConsumer(applabel='b2g_build_listener')
         pulse.configure(topic='#', callback=self.on_build)
 
-        if not testmode:
+        if not self.testfile:
             self.logger.info('waiting for pulse messages...')
             pulse.listen()
         else:
             t = Thread(target=pulse.listen)
             t.daemon = True
             t.start()
-            data = {'payload': {'buildurl': 'http://localhost/qemu_package.tar.gz',
-                                'commit': '1491e43e025fa0243e65d3f353cd6813137beee8'} }
+            f = open(self.testfile, 'r')
+            data = f.read()
             self.on_build(data, None)
 
     def get_test_list(self, manifest):
@@ -141,10 +141,9 @@ def main():
     parser.add_option("--config", action="store", dest="config_file",
                       default="automation.conf",
                       help="Specify the configuration file")
-    parser.add_option("--testmode", action="store_true", dest="testmode",
-                      default = False,
+    parser.add_option("--testfile", action="store", dest="testfile",
                       help = "Start in test mode without using pulse, "
-                      "utilizing a tarball at http://localhost/qemu_package.tar.gz")
+                      "utilizing the pulse message defined in the specified file")
     parser.add_option("--test-manifest", action="store", dest="testmanifest",
                       default = os.path.join("tests","unit-tests-b2g.ini"),
                       help="Specify the test manifest, defaults to tests/all-tests.ini")
@@ -192,7 +191,7 @@ def main():
 
     try:
         b2gauto = B2GAutomation(options.testmanifest,
-                                testmode=options.testmode,
+                                testfile=options.testfile,
                                 es_server=es_server,
                                 rest_server=rest_server)
     except:
