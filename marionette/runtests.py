@@ -159,6 +159,9 @@ class MarionetteTestRunner(object):
         elapsedtime = datetime.utcnow() - starttime
         if self.autolog:
             self.post_to_autolog(elapsedtime)
+        if self.marionette.emulator:
+            self.marionette.emulator.close()
+            self.marionette.emulator = None
 
     def run_test(self, test):
         if not self.httpd:

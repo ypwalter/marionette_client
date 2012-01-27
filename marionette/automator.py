@@ -70,6 +70,7 @@ class B2GAutomation:
 
     def on_build(self, data, msg):
         # Found marionette build! Install it
+        msg.ack()
         self.lock.acquire()
 
         try:
@@ -116,7 +117,6 @@ class B2GAutomation:
         except:
             self.logger.exception("Failed to untar file")
         return None
-
 
     def run_marionette(self, dir, rev):
         self.logger.info("Starting test run for revision: %s" % rev)
