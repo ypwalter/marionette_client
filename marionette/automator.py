@@ -70,7 +70,8 @@ class B2GAutomation:
 
     def on_build(self, data, msg):
         # Found marionette build! Install it
-        msg.ack()
+        if msg is not None:
+            msg.ack()
         self.lock.acquire()
 
         try:
