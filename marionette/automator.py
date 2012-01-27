@@ -3,6 +3,7 @@
 # using that build.
 
 import ConfigParser
+import json
 import logging
 import os
 import sys
@@ -51,7 +52,7 @@ class B2GAutomation:
             t.daemon = True
             t.start()
             f = open(self.testfile, 'r')
-            data = f.read()
+            data = json.loads(f.read())
             self.on_build(data, None)
 
     def get_test_list(self, manifest):
