@@ -221,7 +221,7 @@ class Marionette(object):
         return self.window
 
     def get_windows(self):
-        response = self._send_message('getWindows', 'values')
+        response = self._send_message('getWindows', 'value')
         return response
 
     def close_window(self, window_id=None):
@@ -337,7 +337,7 @@ class Marionette(object):
         kwargs = { 'value': target, 'using': method }
         if id:
             kwargs['element'] = id
-        response = self._send_message('findElements', 'values', **kwargs)
+        response = self._send_message('findElements', 'value', **kwargs)
         assert(isinstance(response, list))
         elements = []
         for x in response:
