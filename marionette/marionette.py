@@ -105,7 +105,7 @@ class Marionette(object):
                  connectToRunningEmulator=False, homedir=None,
                  baseurl=None):
         self.host = host
-        self.port = port
+        self.port = self.local_port = port
         self.session = None
         self.window = None
         self.emulator = None
@@ -145,6 +145,10 @@ class Marionette(object):
             self.session = None
             self.window = None
             self.client.close()
+            if self.emulator:
+                port = self.emulator.restart(self.local_port)
+                if port is not None:
+                    self.port = self.client.port = port
             raise TimeoutException(message='socket.timeout', status=21, stacktrace=None)
 
         if (response_key == 'ok' and response.get('ok') ==  True) or response_key in response:
