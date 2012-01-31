@@ -64,11 +64,12 @@ class MarionetteTestRunner(object):
 
     def __init__(self, address=None, emulator=False, homedir=None,
                  autolog=False, revision=None, es_server=None,
-                 rest_server=None, logger=None):
+                 rest_server=None, logger=None, testgroup="marionette"):
         self.address = address
         self.emulator = emulator
         self.homedir = homedir
         self.autolog = autolog
+        self.testgroup = testgroup
         self.revision = revision
         self.es_server = es_server
         self.rest_server = rest_server
@@ -76,15 +77,19 @@ class MarionetteTestRunner(object):
         self.httpd = None
         self.baseurl = None
         self.marionette = None
-        self.passed = 0
-        self.failed = 0
-        self.todo = 0
-        self.failures = []
+
+        self.reset_test_stats()
 
         if self.logger is None:
             self.logger = logging.getLogger('Marionette')
             self.logger.setLevel(logging.INFO)
             self.logger.addHandler(logging.StreamHandler())
+
+    def reset_test_stats(self):
+        self.passed = 0
+        self.failed = 0
+        self.todo = 0
+        self.failures = []
 
     def start_httpd(self):
         host = iface.get_lan_ip()
@@ -121,7 +126,7 @@ class MarionetteTestRunner(object):
         # See: https://wiki.mozilla.org/Auto-tools/Projects/Autolog
         from mozautolog import RESTfulAutologTestGroup
         testgroup = RESTfulAutologTestGroup(
-            testgroup = 'marionette',
+            testgroup = self.testgroup,
             os = 'android',
             platform = 'emulator',
             harness = 'marionette',
@@ -149,6 +154,7 @@ class MarionetteTestRunner(object):
         testgroup.submit()
 
     def run_tests(self, tests):
+        self.reset_test_stats()
         starttime = datetime.utcnow()
         for test in tests:
             self.run_test(test)
@@ -170,7 +176,10 @@ class MarionetteTestRunner(object):
         if not self.marionette:
             self.start_marionette()
 
-        filepath = os.path.join(os.path.dirname(__file__), test)
+        if not os.path.isabs(test):
+            filepath = os.path.join(os.path.dirname(__file__), test)
+        else:
+            filepath = test
 
         if os.path.isdir(filepath):
             for root, dirs, files in os.walk(filepath):

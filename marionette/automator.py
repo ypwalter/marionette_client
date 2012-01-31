@@ -30,16 +30,17 @@ class B2GPulseConsumer(GenericConsumer):
 
 
 class B2GAutomation:
-    def __init__(self, test_manifest, testfile=None,
-                 es_server=None, rest_server=None):
+    def __init__(self, tests, testfile=None,
+                 es_server=None, rest_server=None, testgroup='marionette'):
         self.logger = mozlog.getLogger('B2G_AUTOMATION')
-        self.testlist = self.get_test_list(test_manifest)
+        self.tests = tests
         self.testfile = testfile
         self.es_server = es_server
         self.rest_server = rest_server
+        self.testgroup = testgroup
         self.lock = RLock()
 
-        self.logger.info("Testlist: %s" % self.testlist)
+        self.logger.info("Testlist: %s" % self.tests)
 
         pulse = B2GPulseConsumer(applabel='b2g_build_listener')
         pulse.configure(topic='#', callback=self.on_build)
@@ -128,8 +129,13 @@ class B2GAutomation:
                                       revision=rev,
                                       logger=self.logger,
                                       es_server=self.es_server,
-                                      rest_server=self.rest_server)
-        runner.run_tests(self.testlist)
+                                      rest_server=self.rest_server,
+                                      testgroup=self.testgroup)
+        for test in self.tests:
+            manifest = test[1].replace('$homedir$', os.path.dirname(dir))
+            testgroup = test[0]
+            runner.testgroup = testgroup
+            runner.run_tests([manifest])
 
     def cleanup(self, dir):
         self.logger.info("Cleaning up")
@@ -173,6 +179,11 @@ def main():
         # let mozautolog provide the default
         rest_server = None
 
+    try:
+        tests = cfg.items('tests')
+    except:
+        tests = [('marionette', options.testmanifest)]
+
     if not options.testmanifest:
         parser.print_usage()
         parser.exit()
@@ -192,7 +203,7 @@ def main():
     logger.addHandler(logging.StreamHandler())
 
     try:
-        b2gauto = B2GAutomation(options.testmanifest,
+        b2gauto = B2GAutomation(tests,
                                 testfile=options.testfile,
                                 es_server=es_server,
                                 rest_server=rest_server)
