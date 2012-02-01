@@ -153,11 +153,11 @@ class MarionetteTestRunner(object):
 
         testgroup.submit()
 
-    def run_tests(self, tests):
+    def run_tests(self, tests, testtype=None):
         self.reset_test_stats()
         starttime = datetime.utcnow()
         for test in tests:
-            self.run_test(test)
+            self.run_test(test, testtype)
         self.logger.info('\nSUMMARY\n-------')
         self.logger.info('passed: %d' % self.passed)
         self.logger.info('failed: %d' % self.failed)
@@ -170,7 +170,7 @@ class MarionetteTestRunner(object):
             self.marionette.emulator = None
         self.marionette = None
 
-    def run_test(self, test):
+    def run_test(self, test, testtype):
         if not self.httpd:
             self.start_httpd()
         if not self.marionette:
@@ -187,7 +187,7 @@ class MarionetteTestRunner(object):
                     if ((filename.startswith('test_') or filename.startswith('browser_')) and 
                         (filename.endswith('.py') or filename.endswith('.js'))):
                         filepath = os.path.join(root, filename)
-                        self.run_test(filepath)
+                        self.run_test(filepath, testtype)
             return
 
         mod_name,file_ext = os.path.splitext(os.path.split(filepath)[-1])
@@ -196,10 +196,26 @@ class MarionetteTestRunner(object):
         suite = unittest.TestSuite()
 
         if file_ext == '.ini':
+            if testtype is not None:
+                testargs = {}
+                testtypes = testtype.replace('+', ' +').replace('-', ' -').split()
+                for atype in testtypes:
+                    if atype.startswith('+'):
+                        testargs.update({ atype[1:]: 'true' })
+                    elif atype.startswith('-'):
+                        testargs.update({ atype[1:]: 'false' })
+                    else:
+                        testargs.update({ atype: 'true' })
             manifest = TestManifest()
             manifest.read(filepath)
-            for i in manifest.get():
-                self.run_test(i["path"])
+
+            if testtype is None:
+                manifest_tests = manifest.get()
+            else:
+                manifest_tests = manifest.get(**testargs)
+
+            for i in manifest_tests:
+                self.run_test(i["path"], testtype)
             return
 
         self.logger.info('TEST-START %s' % os.path.basename(test))
@@ -251,8 +267,19 @@ if __name__ == "__main__":
                       help = "launch a B2G emulator on which to run tests")
     parser.add_option('--address', dest='address', action='store',
                       help='host:port of running Gecko instance to connect to')
+    parser.add_option('--type', dest='type', action='store',
+                      default='browser+b2g',
+                      help = "The type of test to run, can be a combination "
+                      "of values defined in unit-tests.ini; individual values "
+                      "are combined with '+' or '-' chars.  Ex:  'browser+b2g' "
+                      "means the set of tests which are compatible with both "
+                      "browser and b2g; 'b2g-qemu' means the set of tests "
+                      "which are compatible with b2g but do not require an "
+                      "emulator.  This argument is only used when loading "
+                      "tests from .ini files.")
     parser.add_option('--homedir', dest='homedir', action='store',
                       help='home directory of emulator files')
+
     options, tests = parser.parse_args()
 
     if not tests:
@@ -268,7 +295,7 @@ if __name__ == "__main__":
                                   emulator=options.emulator,
                                   homedir=options.homedir,
                                   autolog=options.autolog)
-    runner.run_tests(tests)
+    runner.run_tests(tests, testtype=options.type)
 
 
 

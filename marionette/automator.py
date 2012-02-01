@@ -135,7 +135,7 @@ class B2GAutomation:
             manifest = test[1].replace('$homedir$', os.path.dirname(dir))
             testgroup = test[0]
             runner.testgroup = testgroup
-            runner.run_tests([manifest])
+            runner.run_tests([manifest], 'b2g')
 
     def cleanup(self, dir):
         self.logger.info("Cleaning up")
@@ -153,7 +153,7 @@ def main():
                       help = "Start in test mode without using pulse, "
                       "utilizing the pulse message defined in the specified file")
     parser.add_option("--test-manifest", action="store", dest="testmanifest",
-                      default = os.path.join("tests","unit-tests-b2g.ini"),
+                      default = os.path.join("tests","unit-tests.ini"),
                       help="Specify the test manifest, defaults to tests/all-tests.ini")
     parser.add_option("--log-file", action="store", dest="logfile",
                       default="b2gautomation.log",
