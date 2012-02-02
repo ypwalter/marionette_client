@@ -5,7 +5,7 @@ import types
 import unittest
 
 from errors import *
-from marionette import HTMLElement
+from marionette import HTMLElement, Marionette
 
 def skip_if_b2g(target):
     def wrapper(self, *args, **kwargs):
@@ -15,10 +15,10 @@ def skip_if_b2g(target):
             sys.stderr.write('skipping ... ')
     return wrapper
 
-
 class CommonTestCase(unittest.TestCase):
 
     def __init__(self, methodName):
+        self._qemu2 = None
         unittest.TestCase.__init__(self, methodName)
 
     def kill_gaia_apps(self):
@@ -77,6 +77,9 @@ setTimeout(checkframes, 0);
     def tearDown(self):
         if self.marionette.session is not None:
             self.marionette.delete_session()
+        if self._qemu2 is not None:
+            self._qemu2.emulator.close()
+            self._qemu2 = None
 
 
 class MarionetteTestCase(CommonTestCase):
@@ -84,6 +87,14 @@ class MarionetteTestCase(CommonTestCase):
     def __init__(self, marionette, methodName='runTest'):
         self.marionette = marionette
         CommonTestCase.__init__(self, methodName)
+
+    def get_new_emulator(self):
+        if self._qemu2 is None:
+            self._qemu2  = Marionette(emulator=True,
+                                      homedir=self.marionette.homedir,
+                                      baseurl=self.marionette.baseurl)
+            self._qemu2.start_session()
+        return self._qemu2
 
 
 class MarionetteJSTestCase(CommonTestCase):

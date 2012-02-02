@@ -109,6 +109,7 @@ class Marionette(object):
         self.session = None
         self.window = None
         self.emulator = None
+        self.homedir = homedir
         self.baseurl = baseurl
 
         if emulator:
