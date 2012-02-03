@@ -71,8 +71,8 @@ setTimeout(checkframes, 0);
     def setUp(self):
         if self.marionette.session is None:
             self.marionette.start_session()
-        if self.marionette.b2g:
-            self.kill_gaia_apps()
+        #if self.marionette.b2g:
+        #    self.kill_gaia_apps()
 
     def tearDown(self):
         if self.marionette.session is not None:
@@ -118,8 +118,16 @@ class MarionetteJSTestCase(CommonTestCase):
 
         # if this is a browser_ test, prepend head.js to it
         if os.path.basename(self.jsFile).startswith('browser_'):
-            head = open(os.path.join(os.path.dirname(__file__), 'tests', 'head.js'), 'r')
-            js = head.read() + js
+            local_head = open(os.path.join(os.path.dirname(__file__), 'tests', 'head.js'), 'r')
+            js = local_head.read() + js
+            head = open(os.path.join(os.path.dirname(self.jsFile), 'head.js'), 'r')
+            for line in head:
+                # we need a bigger timeout than the default specified by the
+                # 'real' head.js
+                if 'const kDefaultWait' in line:
+                    js += 'const kDefaultWait = 45000;\n'
+                else:
+                    js += line
 
         context = self.context_re.search(js)
         if context:
