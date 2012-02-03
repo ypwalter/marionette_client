@@ -243,7 +243,6 @@ var EventUtils = {
 
 function waitForExplicitFinish() {}
 
-var content = shell.home.contentWindow;
 var readyAndUnlocked;
 
 // The browser-chrome tests define a test() method but do not explicitly
