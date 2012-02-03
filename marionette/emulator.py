@@ -74,6 +74,7 @@ class Emulator(object):
                     '-data', self.dataImg,
                     '-memory', '512',
                     '-verbose',
+                    '-skin', '400x800',
                     '-qemu', '-cpu', 'cortex-a8'
                ]
 
