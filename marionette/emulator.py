@@ -19,6 +19,7 @@ class Emulator(object):
         self.proc = None
         self.marionette_port = None
         self.telnet = None
+        self._adb_started = False
         self.battery = EmulatorBattery(self)
         self.homedir = homedir
 
@@ -136,7 +137,10 @@ class Emulator(object):
         if self.proc:
             retcode = self.proc.poll()
             self.proc = None
-            return retcode
+        if self._adb_started:
+            self._run_adb(['kill-server'])
+            self._adb_started = False
+        return retcode
 
     def _get_adb_devices(self):
         offline = set()
@@ -158,9 +162,18 @@ class Emulator(object):
         self.start()
         return self.setup_port_forwarding(port)
 
+    def start_adb(self):
+        result = self._run_adb(['start-server'])
+        # We keep track of whether we've started adb or not, so we know
+        # if we need to kill it.
+        if 'daemon started successfully' in result:
+            self._adb_started = True
+        else:
+            self._adb_started = False
+
     def connect(self):
         self._check_for_adb()
-        self._run_adb(['start-server'])
+        self.start_adb()
 
         online, offline = self._get_adb_devices()
         now = datetime.datetime.now()
@@ -173,7 +186,7 @@ class Emulator(object):
 
     def start(self):
         self._check_for_b2g()
-        self._run_adb(['start-server'])
+        self.start_adb()
 
         original_online, original_offline = self._get_adb_devices()
 
