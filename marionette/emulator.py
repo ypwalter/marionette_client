@@ -134,13 +134,14 @@ class Emulator(object):
         if self.is_running and self._emulator_launched:
             self.proc.terminate()
             self.proc.wait()
-        if self.proc:
-            retcode = self.proc.poll()
-            self.proc = None
         if self._adb_started:
             self._run_adb(['kill-server'])
             self._adb_started = False
-        return retcode
+        if self.proc:
+            retcode = self.proc.poll()
+            self.proc = None
+            return retcode
+        return 0
 
     def _get_adb_devices(self):
         offline = set()
