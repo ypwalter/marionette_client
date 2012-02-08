@@ -23,6 +23,9 @@ return frame.contentWindow.document.getElementsByTagName('title')[0].innerHTML;
 """, [app_frame])
         self.assertEqual(page_title, 'SMS')
 
+        # Kill the app
+        self.kill_gaia_app('../sms/sms.html')
+
         # more tests here....
 
 

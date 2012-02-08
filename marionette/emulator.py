@@ -22,6 +22,8 @@ class Emulator(object):
         self._adb_started = False
         self.battery = EmulatorBattery(self)
         self.homedir = homedir
+        if self.homedir is not None:
+            self.homedir = os.path.expanduser(homedir)
 
     def _check_for_b2g(self):
         if self.homedir is None:
@@ -134,13 +136,14 @@ class Emulator(object):
         if self.is_running and self._emulator_launched:
             self.proc.terminate()
             self.proc.wait()
-        if self.proc:
-            retcode = self.proc.poll()
-            self.proc = None
         if self._adb_started:
             self._run_adb(['kill-server'])
             self._adb_started = False
-        return retcode
+        if self.proc:
+            retcode = self.proc.poll()
+            self.proc = None
+            return retcode
+        return 0
 
     def _get_adb_devices(self):
         offline = set()
