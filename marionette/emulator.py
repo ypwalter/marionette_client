@@ -21,7 +21,7 @@ class Emulator(object):
         self.telnet = None
         self._adb_started = False
         self.battery = EmulatorBattery(self)
-        self.homedir = homedir
+        self.homedir = os.path.expanduser(homedir)
 
     def _check_for_b2g(self):
         if self.homedir is None:
