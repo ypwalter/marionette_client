@@ -21,21 +21,21 @@ class CommonTestCase(unittest.TestCase):
         self._qemu = []
         unittest.TestCase.__init__(self, methodName)
 
+    def kill_gaia_app(self, url):
+        self.marionette.execute_script("""
+window.wrappedJSObject.Gaia.WindowManager.kill("%s");
+return(true);
+""" % url)
+
     def kill_gaia_apps(self):
         # shut down any running Gaia apps
-        app_count = self.marionette.execute_script("""
-var runningApps = window.wrappedJSObject.Gaia.AppManager._runningApps;
-runningApps.forEach(function(app) { 
-    window.wrappedJSObject.Gaia.AppManager.kill(app.url);
-});
-return runningApps.length;
-""")
-        self.assertEqual(app_count, 0)
+        # XXX there's no API to do this currently
+        pass
 
     def launch_gaia_app(self, url):
         # launch the app using Gaia's AppManager
         self.marionette.execute_script("""
-window.wrappedJSObject.Gaia.AppManager.launch("%s");
+window.wrappedJSObject.Gaia.WindowManager.launch("%s");
 return(true);
     """ % url)
 
@@ -148,6 +148,9 @@ class MarionetteJSTestCase(CommonTestCase):
 
         try:
             results = self.marionette.execute_js_script(js, args)
+
+            if launch_app:
+                self.kill_gaia_app(launch_app)
 
             self.assertTrue(not 'timeout' in self.jsFile,
                             'expected timeout not triggered')
