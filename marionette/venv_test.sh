@@ -50,9 +50,6 @@ if [ -d "marionette_venv" ]
 then
   cd marionette_venv
   . bin/activate
-  # update the marionette_client
-  cd marionette_client
-  git pull
 else
   curl https://raw.github.com/pypa/virtualenv/develop/virtualenv.py | ${PYTHON} - marionette_venv 
   cd marionette_venv
@@ -61,15 +58,14 @@ else
   git clone git://github.com/mozilla/mozbase.git
   cd mozbase
   python setup_development.py
-  # install marionette_client
-  cd ..
-  git clone git://github.com/jonallengriffin/marionette_client.git
-  cd marionette_client 
-  # set up marionette_client
-  python setup.py develop
 fi
 
-cd marionette
+cd ..
+# update the marionette_client
+pushd ../
+python setup.py develop
+popd
+
 #pop off the python parameter
 shift
 python runtests.py $@
