@@ -58,13 +58,13 @@ else
   git clone git://github.com/mozilla/mozbase.git
   cd mozbase
   python setup_development.py
+  cd ..
 fi
 
-cd ..
+cd ../..
 # update the marionette_client
-pushd ../
 python setup.py develop
-popd
+cd marionette
 
 #pop off the python parameter
 shift
