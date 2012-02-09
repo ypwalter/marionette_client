@@ -65,6 +65,11 @@ var EventUtils = {
     }
   },
 
+  sendKey: function EventUtils_sendKey(aKey, aWindow) {
+    var keyName = "VK_" + aKey.toUpperCase();
+    this.synthesizeKey(keyName, { shiftKey: false }, aWindow);
+  },
+
   _getDOMWindowUtils: function EventUtils__getDOMWindowUtils(aWindow) {
     if (!aWindow) {
       aWindow = window;
