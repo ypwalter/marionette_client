@@ -6,6 +6,7 @@ import os
 import types
 import unittest
 import socket
+import sys
 from datetime import datetime
 
 try:
@@ -296,6 +297,8 @@ if __name__ == "__main__":
                                   homedir=options.homedir,
                                   autolog=options.autolog)
     runner.run_tests(tests, testtype=options.type)
+    if runner.failed > 0:
+        sys.exit(10)
 
 
 
