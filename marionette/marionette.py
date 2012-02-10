@@ -345,3 +345,8 @@ class Marionette(object):
             elements.append(HTMLElement(self, x))
         return elements
 
+    def log(self, msg, level=None):
+        return self._send_message('log', 'ok', value=msg, level=level)
+
+    def get_logs(self):
+        return self._send_message('getLogs', 'value')
