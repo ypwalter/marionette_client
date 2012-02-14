@@ -91,8 +91,9 @@ class MarionetteTestCase(CommonTestCase):
 
     def get_new_emulator(self):
         _qemu  = Marionette(emulator=True,
-                             homedir=self.marionette.homedir,
-                             baseurl=self.marionette.baseurl)
+                            homedir=self.marionette.homedir,
+                            baseurl=self.marionette.baseurl,
+                            noWindow=self.marionette.noWindow)
         _qemu.start_session()
         self._qemu.append(_qemu)
         return _qemu
