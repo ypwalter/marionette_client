@@ -94,7 +94,10 @@ class MarionetteTestRunner(object):
 
     def start_httpd(self):
         host = iface.get_lan_ip()
-        port = 8765
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(("",0))
+        port = s.getsockname()[1]
+        s.close()
         self.baseurl = 'http://%s:%d/' % (host, port)
         self.logger.info('running webserver on %s' % self.baseurl)
         self.httpd = MozHttpd(host=host,
