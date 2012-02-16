@@ -23,7 +23,7 @@ class CommonTestCase(unittest.TestCase):
 
     def kill_gaia_app(self, url):
         self.marionette.execute_script("""
-window.wrappedJSObject.Gaia.WindowManager.kill("%s");
+window.wrappedJSObject.getApplicationManager().kill("%s");
 return(true);
 """ % url)
 
@@ -34,37 +34,17 @@ return(true);
 
     def launch_gaia_app(self, url):
         # launch the app using Gaia's AppManager
-        self.marionette.execute_script("""
-window.wrappedJSObject.Gaia.WindowManager.launch("%s");
-return(true);
-    """ % url)
-
-        # This is the last directory of the path plus the basename,
-        # e.g., 'sms/sms.html'.
-        short_url = os.path.join(os.path.basename(os.path.dirname(url)), os.path.basename(url))
-
-        # Wait for the iframe to appear that will load the app, attach
-        # an onload hanlder to it, and wait for it to load.  This seems
-        # like it could potentially be racy...could the app finish loading
-        # before we attach our listener?
         self.marionette.set_script_timeout(30000)
         frame = self.marionette.execute_async_script("""
-function checkframes() {
-    var frames = document.getElementsByTagName('iframe');
-    for (var index in frames) {
-        if (frames[index].src.indexOf("%s") > -1) {
-            var frame = frames[index];
-            frame.addEventListener('load', function frameload() {
-                frame.removeEventListener('load', frameload);
-                setTimeout(function() {marionetteScriptFinished(frame);}, 1000);
-                return;
-            });
-        }
+var frame = window.wrappedJSObject.getApplicationManager().launch("%s").element;
+window.addEventListener('message', function frameload(e) {
+    if (e.data == 'appready') {
+        window.removeEventListener('message', frameload);
+        marionetteScriptFinished(frame);
     }
-    setTimeout(checkframes, 0);
-}
-setTimeout(checkframes, 0);
-""" % short_url)
+});
+    """ % url)
+
         self.assertTrue(isinstance(frame, HTMLElement))
         return frame
 
@@ -91,8 +71,9 @@ class MarionetteTestCase(CommonTestCase):
 
     def get_new_emulator(self):
         _qemu  = Marionette(emulator=True,
-                             homedir=self.marionette.homedir,
-                             baseurl=self.marionette.baseurl)
+                            homedir=self.marionette.homedir,
+                            baseurl=self.marionette.baseurl,
+                            noWindow=self.marionette.noWindow)
         _qemu.start_session()
         self._qemu.append(_qemu)
         return _qemu

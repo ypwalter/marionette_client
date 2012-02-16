@@ -65,7 +65,8 @@ class MarionetteTestRunner(object):
 
     def __init__(self, address=None, emulator=False, homedir=None,
                  autolog=False, revision=None, es_server=None,
-                 rest_server=None, logger=None, testgroup="marionette"):
+                 rest_server=None, logger=None, testgroup="marionette",
+                 noWindow=False):
         self.address = address
         self.emulator = emulator
         self.homedir = homedir
@@ -75,6 +76,7 @@ class MarionetteTestRunner(object):
         self.es_server = es_server
         self.rest_server = rest_server
         self.logger = logger
+        self.noWindow = noWindow
         self.httpd = None
         self.baseurl = None
         self.marionette = None
@@ -94,7 +96,10 @@ class MarionetteTestRunner(object):
 
     def start_httpd(self):
         host = iface.get_lan_ip()
-        port = 8765
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(("",0))
+        port = s.getsockname()[1]
+        s.close()
         self.baseurl = 'http://%s:%d/' % (host, port)
         self.logger.info('running webserver on %s' % self.baseurl)
         self.httpd = MozHttpd(host=host,
@@ -116,7 +121,8 @@ class MarionetteTestRunner(object):
         elif self.emulator:
             self.marionette = Marionette(emulator=True,
                                          homedir=self.homedir,
-                                         baseurl=self.baseurl)
+                                         baseurl=self.baseurl,
+                                         noWindow=self.noWindow)
         else:
             raise Exception("must specify address or emulator")
 
@@ -266,6 +272,11 @@ if __name__ == "__main__":
                       action = "store_true", dest = "emulator",
                       default = False,
                       help = "launch a B2G emulator on which to run tests")
+    parser.add_option("--no-window",
+                      action = "store_true", dest = "noWindow",
+                      default = False,
+                      help = "when Marionette launches an emulator, start it "
+                      "with the -no-window argument")
     parser.add_option('--address', dest='address', action='store',
                       help='host:port of running Gecko instance to connect to')
     parser.add_option('--type', dest='type', action='store',
@@ -295,6 +306,7 @@ if __name__ == "__main__":
     runner = MarionetteTestRunner(address=options.address,
                                   emulator=options.emulator,
                                   homedir=options.homedir,
+                                  noWindow=options.noWindow,
                                   autolog=options.autolog)
     runner.run_tests(tests, testtype=options.type)
     if runner.failed > 0:

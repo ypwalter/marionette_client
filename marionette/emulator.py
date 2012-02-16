@@ -13,7 +13,7 @@ class Emulator(object):
 
     deviceRe = re.compile(r"^emulator-(\d+)(\s*)(.*)$")
 
-    def __init__(self, homedir=None):
+    def __init__(self, homedir=None, noWindow=False):
         self.port = None
         self._emulator_launched = False
         self.proc = None
@@ -22,6 +22,7 @@ class Emulator(object):
         self._adb_started = False
         self.battery = EmulatorBattery(self)
         self.homedir = homedir
+        self.noWindow = noWindow
         if self.homedir is not None:
             self.homedir = os.path.expanduser(homedir)
 
@@ -70,16 +71,17 @@ class Emulator(object):
 
     @property
     def args(self):
-        return [
-                    self.binary,
-                    '-kernel', self.kernelImg,
-                    '-sysdir', self.sysDir,
-                    '-data', self.dataImg,
-                    '-memory', '512',
-                    '-verbose',
-                    '-skin', '400x800',
-                    '-qemu', '-cpu', 'cortex-a8'
-               ]
+        qemuArgs =  [ self.binary,
+                      '-kernel', self.kernelImg,
+                      '-sysdir', self.sysDir,
+                      '-data', self.dataImg ]
+        if self.noWindow:
+            qemuArgs.append('-no-window')
+        qemuArgs.extend(['-memory', '512',
+                         '-verbose',
+                         '-skin', '400x800',
+                         '-qemu', '-cpu', 'cortex-a8'])
+        return qemuArgs
 
     @property
     def is_running(self):
