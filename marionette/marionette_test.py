@@ -39,7 +39,7 @@ return(true);
 var frame = window.wrappedJSObject.getApplicationManager().launch("%s").element;
 window.addEventListener('message', function frameload(e) {
     if (e.data == 'appready') {
-        frame.removeEventListener('message', frameload);
+        window.removeEventListener('message', frameload);
         marionetteScriptFinished(frame);
     }
 });
