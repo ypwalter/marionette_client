@@ -148,7 +148,7 @@ class MarionetteTestRunner(object):
 
         testgroup.add_test_suite(
             testsuite = 'b2g emulator testsuite',
-            elapsedtime = elapsedtime.total_seconds(),
+            elapsedtime = elapsedtime.seconds,
             cmdline = '',
             passed = self.passed,
             failed = self.failed,
