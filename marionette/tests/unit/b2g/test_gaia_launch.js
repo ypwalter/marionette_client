@@ -11,9 +11,9 @@ MARIONETTE_TIMEOUT = 1000;
  * iframe contains the text 'SMS'.
  */
 var frame = Marionette.namedArgs.appframe;
-Marionette.is('SMS', frame.contentWindow.document.getElementsByTagName('title')[0].innerHTML);
+Marionette.is('Messages', frame.contentWindow.document.getElementsByTagName('title')[0].innerHTML);
 
 /* more tests here.... */
 
-Marionette.finish();
+finish();
 
