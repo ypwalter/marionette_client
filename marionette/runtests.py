@@ -148,7 +148,7 @@ class MarionetteTestRunner(object):
 
         testgroup.add_test_suite(
             testsuite = 'b2g emulator testsuite',
-            elapsedtime = elapsedtime.total_seconds(),
+            elapsedtime = elapsedtime.seconds,
             cmdline = '',
             passed = self.passed,
             failed = self.failed,
@@ -268,6 +268,12 @@ if __name__ == "__main__":
                       action = "store_true", dest = "autolog",
                       default = False,
                       help = "send test results to autolog")
+    parser.add_option("--revision",
+                      action = "store", dest = "revision",
+                      help = "git revision for autolog submissions")
+    parser.add_option("--testgroup",
+                      action = "store", dest = "testgroup",
+                      help = "testgroup names for autolog submissions")
     parser.add_option("--emulator",
                       action = "store_true", dest = "emulator",
                       default = False,
@@ -307,6 +313,8 @@ if __name__ == "__main__":
                                   emulator=options.emulator,
                                   homedir=options.homedir,
                                   noWindow=options.noWindow,
+                                  revision=options.revision,
+                                  testgroup=options.testgroup,
                                   autolog=options.autolog)
     runner.run_tests(tests, testtype=options.type)
     if runner.failed > 0:

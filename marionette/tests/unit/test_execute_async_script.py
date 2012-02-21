@@ -37,6 +37,10 @@ from marionette_test import MarionetteTestCase, skip_if_b2g
 from errors import JavascriptException, MarionetteException, ScriptTimeoutException
 
 class TestExecuteAsyncContent(MarionetteTestCase):
+    def setUp(self):
+        super(TestExecuteAsyncContent, self).setUp()
+        self.marionette.set_script_timeout(1000)
+
     def test_execute_async_simple(self):
         self.assertEqual(1, self.marionette.execute_async_script("arguments[arguments.length-1](1);"))
 
@@ -44,8 +48,7 @@ class TestExecuteAsyncContent(MarionetteTestCase):
         self.assertEqual(1, self.marionette.execute_async_script("marionetteScriptFinished(1);"))
 
     def test_execute_async_timeout(self):
-        self.marionette.set_script_timeout(1000)
-        self.assertRaises(ScriptTimeoutException, self.marionette.execute_async_script, "1;")
+        self.assertRaises(ScriptTimeoutException, self.marionette.execute_async_script, "var x = 1;")
 
     def test_no_timeout(self):
         self.marionette.set_script_timeout(2000)
