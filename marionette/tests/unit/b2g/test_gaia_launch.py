@@ -16,12 +16,12 @@ class TestGaiaLaunch(MarionetteTestCase):
         app_frame = self.launch_gaia_app('../sms/sms.html')
 
         # Verify that the <title> element of the content loaded in the 
-        # iframe contains the text 'SMS'.
+        # iframe contains the text 'Messages'.
         page_title = self.marionette.execute_script("""
 var frame = arguments[0];
 return frame.contentWindow.document.getElementsByTagName('title')[0].innerHTML;
 """, [app_frame])
-        self.assertEqual(page_title, 'SMS')
+        self.assertEqual(page_title, 'Messages')
 
         # Kill the app
         self.kill_gaia_app('../sms/sms.html')

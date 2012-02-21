@@ -16,15 +16,15 @@ class TestGaiaLaunch(MarionetteTestCase):
         app_frame = self.launch_gaia_app('../sms/sms.html')
 
         # Verify that the <title> element of the content loaded in the 
-        # iframe contains the text 'SMS'.
+        # iframe contains the text 'Messages'.
         page_title = self.marionette.execute_script("""
 var frame = arguments[0];
 return frame.contentWindow.document.getElementsByTagName('title')[0].innerHTML;
 """, [app_frame])
-        self.assertEqual(page_title, 'SMS')
+        self.assertEqual(page_title, 'Messages')
 
         self.marionette.switch_to_frame(0)
-        self.assertEqual(self.marionette.execute_script("return window.document.getElementsByTagName('title')[0].innerHTML;"), 'SMS')
+        self.assertEqual(self.marionette.execute_script("return window.document.getElementsByTagName('title')[0].innerHTML;"), 'Messages')
         self.assertTrue("sms" in self.marionette.execute_script("return document.location.href;"))
         self.marionette.switch_to_frame()
         self.assertTrue("homescreen" in self.marionette.execute_script("return document.location.href;"))
