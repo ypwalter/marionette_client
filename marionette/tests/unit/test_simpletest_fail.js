@@ -7,10 +7,10 @@ MARIONETTE_TIMEOUT = 1000;
 /* this test will fail */
 
 setTimeout(function() { 
-    Marionette.is(1, 2); 
-    Marionette.finish();
+    is(1, 2); 
+    finish();
 }, 100);
-Marionette.isnot(1, 1);
-Marionette.ok(1 == 2);
+isnot(1, 1);
+ok(1 == 2);
 
 

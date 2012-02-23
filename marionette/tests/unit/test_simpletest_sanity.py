@@ -7,14 +7,14 @@ from errors import JavascriptException, MarionetteException, ScriptTimeoutExcept
 
 class SimpletestSanityTest(MarionetteTestCase):
 
-    callFinish = "return Marionette.finish();"
+    callFinish = "return finish();"
 
     def test_is(self):
         def runtests():
-            sentFail1 = "Marionette.is(true, false, 'isTest1');" + self.callFinish
-            sentFail2 = "Marionette.is(true, false, 'isTest2');" + self.callFinish
-            sentPass1 = "Marionette.is(true, true, 'isTest3');" + self.callFinish
-            sentPass2 = "Marionette.is(true, true, 'isTest4');" + self.callFinish
+            sentFail1 = "is(true, false, 'isTest1');" + self.callFinish
+            sentFail2 = "is(true, false, 'isTest2');" + self.callFinish
+            sentPass1 = "is(true, true, 'isTest3');" + self.callFinish
+            sentPass2 = "is(true, true, 'isTest4');" + self.callFinish
 
             self.assertEqual(1, self.marionette.execute_script(sentFail1)["failed"])
             self.assertEqual(0, self.marionette.execute_script(sentFail2)["passed"])
@@ -34,10 +34,10 @@ class SimpletestSanityTest(MarionetteTestCase):
 
     def test_isnot(self):
         def runtests():
-           sentFail1 = "Marionette.isnot(true, true, 'isTest3');" + self.callFinish
-           sentFail2 = "Marionette.isnot(true, true, 'isTest4');" + self.callFinish
-           sentPass1 = "Marionette.isnot(true, false, 'isTest1');" + self.callFinish
-           sentPass2 = "Marionette.isnot(true, false, 'isTest2');" + self.callFinish
+           sentFail1 = "isnot(true, true, 'isTest3');" + self.callFinish
+           sentFail2 = "isnot(true, true, 'isTest4');" + self.callFinish
+           sentPass1 = "isnot(true, false, 'isTest1');" + self.callFinish
+           sentPass2 = "isnot(true, false, 'isTest2');" + self.callFinish
 
            self.assertEqual(1, self.marionette.execute_script(sentFail1)["failed"]);
            self.assertEqual(0, self.marionette.execute_script(sentFail2)["passed"]);
@@ -57,10 +57,10 @@ class SimpletestSanityTest(MarionetteTestCase):
 
     def test_ok(self):
         def runtests():
-            sentFail1 = "Marionette.ok(1==2, 'testOk');" + self.callFinish
-            sentFail2 = "Marionette.ok(1==2, 'testOk');" + self.callFinish
-            sentPass1 = "Marionette.ok(1==1, 'testOk');" + self.callFinish
-            sentPass2 = "Marionette.ok(1==1, 'testOk');" + self.callFinish
+            sentFail1 = "ok(1==2, 'testOk');" + self.callFinish
+            sentFail2 = "ok(1==2, 'testOk');" + self.callFinish
+            sentPass1 = "ok(1==1, 'testOk');" + self.callFinish
+            sentPass2 = "ok(1==1, 'testOk');" + self.callFinish
 
             self.assertEqual(1, self.marionette.execute_script(sentFail1)["failed"]);
             self.assertEqual(0, self.marionette.execute_script(sentFail2)["passed"]);

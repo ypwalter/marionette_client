@@ -44,14 +44,14 @@ class TestLog(MarionetteTestCase):
         self.assertTrue("I AM ERROR" in self.marionette.get_logs()[1])
 
     def test_log_script(self):
-        self.marionette.execute_script("Marionette.log('some log');")
+        self.marionette.execute_script("log('some log');")
         self.assertTrue("some log" in self.marionette.get_logs()[0])
-        self.marionette.execute_script("Marionette.log('some error', 'ERROR');")
+        self.marionette.execute_script("log('some error', 'ERROR');")
         self.assertTrue("some error" in self.marionette.get_logs()[1])
         self.marionette.set_script_timeout(2000)
-        self.marionette.execute_async_script("Marionette.log('some more logs'); finish();")
+        self.marionette.execute_async_script("log('some more logs'); finish();")
         self.assertTrue("some more logs" in self.marionette.get_logs()[2])
-        self.marionette.execute_async_script("Marionette.log('some more errors', 'ERROR'); finish();")
+        self.marionette.execute_async_script("log('some more errors', 'ERROR'); finish();")
         self.assertTrue("some more errors" in self.marionette.get_logs()[3])
 
 class TestLogChrome(TestLog):

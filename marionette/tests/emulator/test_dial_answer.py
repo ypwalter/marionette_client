@@ -6,7 +6,7 @@ class MultiEmulatorDialTest(MarionetteTestCase):
        another and to detect an incoming call.
     """
 
-    def test_dial_between_emulators(self):
+    def test_dial_answer(self):
         # Tests always have one emulator available as self.marionette; we'll
         # use this for the receiving emulator.  We'll also launch a second
         # emulator to use as the sender.
@@ -41,7 +41,7 @@ window.wrappedJSObject.call = navigator.mozTelephony.dial("%s");
         receiver.set_script_timeout(30000)
         received = receiver.execute_async_script("""
 window.wrappedJSObject.callstate = null;
-Marionette.waitFor(function() {
+waitFor(function() {
     let call = window.wrappedJSObject.incoming;
     call.addEventListener("connected", function test_connected(e) {
         call.removeEventListener("connected", test_connected);
@@ -71,7 +71,7 @@ call.addEventListener("connected", function test_connected(e) {
         # connected.
         receiver.execute_async_script("""
 window.wrappedJSObject.incoming.answer();
-Marionette.waitFor(function() {
+waitFor(function() {
     marionetteScriptFinished(true);
 }, function() {
     return window.wrappedJSObject.callstate == "connected";
@@ -80,7 +80,7 @@ Marionette.waitFor(function() {
 
         # Verify that the callstate changes to connected on the caller as well.
         self.assertTrue(receiver.execute_async_script("""
-Marionette.waitFor(function() {
+waitFor(function() {
     marionetteScriptFinished(true);
 }, function() {
     return window.wrappedJSObject.callstate == "connected";
