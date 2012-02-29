@@ -77,7 +77,7 @@ class Emulator(object):
                       '-data', self.dataImg ]
         if self.noWindow:
             qemuArgs.append('-no-window')
-        qemuArgs.extend(['-memory', '512',
+        qemuArgs.extend(['-memory', '4096',
                          '-verbose',
                          '-skin', '400x800',
                          '-qemu', '-cpu', 'cortex-a8'])
