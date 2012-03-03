@@ -1,9 +1,11 @@
 import datetime
 import os
 import re
+import shutil
 import socket
 import subprocess
 from telnetlib import Telnet
+import tempfile
 import time
 
 from emulator_battery import EmulatorBattery
@@ -19,6 +21,7 @@ class Emulator(object):
         self.proc = None
         self.marionette_port = None
         self.telnet = None
+        self._tmp_userdata = None
         self._adb_started = False
         self.battery = EmulatorBattery(self)
         self.homedir = homedir
@@ -145,6 +148,9 @@ class Emulator(object):
         if self.proc:
             retcode = self.proc.poll()
             self.proc = None
+            if self._tmp_userdata:
+                os.remove(self._tmp_userdata)
+                self._tmp_userdata = None
             return retcode
         return 0
 
@@ -194,9 +200,16 @@ class Emulator(object):
         self._check_for_b2g()
         self.start_adb()
 
+        # Make a copy of the userdata.img for this instance of the emulator
+        # to use.
+        self._tmp_userdata = tempfile.mktemp(prefix='marionette')
+        shutil.copyfile(self.dataImg, self._tmp_userdata)
+        qemu_args = self.args[:]
+        qemu_args[qemu_args.index('-data') + 1] = self._tmp_userdata
+
         original_online, original_offline = self._get_adb_devices()
 
-        self.proc = subprocess.Popen(self.args,
+        self.proc = subprocess.Popen(qemu_args,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE)
 
