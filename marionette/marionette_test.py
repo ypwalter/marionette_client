@@ -51,6 +51,7 @@ window.addEventListener('message', function frameload(e) {
     def setUp(self):
         if self.marionette.session is None:
             self.marionette.start_session()
+        self.loglines = None
         #if self.marionette.b2g:
         #    self.kill_gaia_apps()
 
@@ -130,6 +131,8 @@ class MarionetteJSTestCase(CommonTestCase):
         try:
             results = self.marionette.execute_js_script(js, args)
 
+            self.loglines = self.marionette.get_logs()
+
             if launch_app:
                 self.kill_gaia_app(launch_app)
 
@@ -158,6 +161,7 @@ class MarionetteJSTestCase(CommonTestCase):
                 # expected exception
                 pass
             else:
+                self.loglines = self.marionette.get_logs()
                 raise
 
 
