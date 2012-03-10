@@ -79,12 +79,12 @@ var EventUtils = {
     //  layout/base/tests/test_reftests_with_caret.html
     //  chrome: toolkit/content/tests/chrome/test_findbar.xul
     //  chrome: toolkit/content/tests/chrome/test_popup_anchor.xul
-    if ("SpecialPowers" in window && window.SpecialPowers != undefined) {
+    /*if ("SpecialPowers" in window && window.SpecialPowers != undefined) {
       return SpecialPowers.getDOMWindowUtils(aWindow);
     }
     if ("SpecialPowers" in parent && parent.SpecialPowers != undefined) {
       return parent.SpecialPowers.getDOMWindowUtils(aWindow);
-    }
+    }*/
 
     //TODO: this is assuming we are in chrome space
     return aWindow.QueryInterface(Components.interfaces.nsIInterfaceRequestor).
