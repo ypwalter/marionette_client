@@ -248,6 +248,15 @@ var EventUtils = {
 
 function waitForExplicitFinish() {}
 
+var SpecialPowers = {
+  _prefService: Components.classes["@mozilla.org/preferences-service;1"]
+                .getService(Components.interfaces.nsIPrefBranch),
+
+  setBoolPref: function SpecialPowers__setBoolPref(pref, value) {
+    this._prefService.setBoolPref(pref, value);
+  },
+};
+
 var readyAndUnlocked;
 
 // The browser-chrome tests define a test() method but do not explicitly
