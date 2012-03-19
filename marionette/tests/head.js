@@ -259,7 +259,16 @@ var SpecialPowers = {
 
 var readyAndUnlocked;
 
-// The browser-chrome tests define a test() method but do not explicitly
-// call it, so we do that here.
-test();
+// see http://mxr.mozilla.org/mozilla-central/source/testing/mochitest/browser-test.js#478
+function nextStep() {
+  finish();
+}
+
+// The browser-chrome tests either start with test() or generatorTest().
+if (typeof(test) != 'undefined')
+  test();
+else if (typeof(generatorTest) != 'undefined') {
+  let result = generatorTest();
+  result.next();
+}
 
