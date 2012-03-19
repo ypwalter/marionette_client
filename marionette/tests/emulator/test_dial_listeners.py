@@ -35,6 +35,7 @@ navigator.mozTelephony.addEventListener("incoming", function test_incoming(e) {
         # dial the receiver from the sender
         sender.execute_script("""
 window.wrappedJSObject.sender_state = [];
+window.wrappedJSObject.sender_call = navigator.mozTelephony.dial("%s");
 window.wrappedJSObject.sender_call.addEventListener("statechange", function test_sender_statechange(e) {
     if (e.call.state == 'disconnected')
         window.wrappedJSObject.sender_call.removeEventListener("statechange", test_sender_statechange);
@@ -45,7 +46,6 @@ window.wrappedJSObject.sender_call.addEventListener("ringing", function test_sen
     window.wrappedJSObject.sender_call.removeEventListener("ringing", test_sender_ringing);
     window.wrappedJSObject.sender_ringing = e.call.state == 'ringing';
 });
-window.wrappedJSObject.sender_call = navigator.mozTelephony.dial("%s");
 """ % toPhoneNumber)
 
         # On the receiver, wait up to 30s for an incoming call to be 
