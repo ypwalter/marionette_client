@@ -1,5 +1,5 @@
 MARIONETTE_CONTEXT="chrome";
-MARIONETTE_TIMEOUT=60000;
+MARIONETTE_TIMEOUT=120000;
 
 // Must be synchronized with nsIDOMWindowUtils.
 const COMPOSITION_ATTR_RAWINPUT              = 0x02;
