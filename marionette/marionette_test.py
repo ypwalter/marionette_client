@@ -52,8 +52,6 @@ window.addEventListener('message', function frameload(e) {
         if self.marionette.session is None:
             self.marionette.start_session()
         self.loglines = None
-        #if self.marionette.b2g:
-        #    self.kill_gaia_apps()
 
     def tearDown(self):
         if self.marionette.session is not None:
@@ -152,7 +150,7 @@ class MarionetteJSTestCase(CommonTestCase):
                                  '%d tests failed:\n%s' % (results['failed'], '\n'.join(fails)))
 
             self.assertTrue(results['passed'] + results['failed'] > 0,
-                            'no tests fun')
+                            'no tests run')
             if self.marionette.session is not None:
                 self.marionette.delete_session()
 

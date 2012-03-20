@@ -260,15 +260,28 @@ var SpecialPowers = {
 var readyAndUnlocked;
 
 // see http://mxr.mozilla.org/mozilla-central/source/testing/mochitest/browser-test.js#478
-function nextStep() {
-  finish();
+function nextStep(arg) {
+  try {
+    __generator.send(arg);
+  } catch(ex if ex instanceof StopIteration) {
+    finish();
+  } catch(ex) {
+    ok(false, "Unhandled exception: " + ex);
+    finish();
+  }
+}
+
+// see http://mxr.mozilla.org/mozilla-central/source/testing/mochitest/browser-test.js#523
+function requestLongerTimeout() {
+  /* no-op! */
 }
 
 // The browser-chrome tests either start with test() or generatorTest().
+var __generator = null;
 if (typeof(test) != 'undefined')
   test();
 else if (typeof(generatorTest) != 'undefined') {
-  let result = generatorTest();
-  result.next();
+  __generator = generatorTest();
+  __generator.next();
 }
 
