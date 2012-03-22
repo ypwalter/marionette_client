@@ -1,7 +1,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '0.1'
+version = '0.2'
 
 # get documentation from the README
 try:
@@ -28,3 +28,4 @@ setup(name='marionette',
       zip_safe=False,
       install_requires=deps,
       )
+

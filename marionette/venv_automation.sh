@@ -54,16 +54,21 @@ else
   curl https://raw.github.com/pypa/virtualenv/develop/virtualenv.py | ${PYTHON} - marionette_auto_venv 
   cd marionette_auto_venv
   . bin/activate
+
   # set up mozbase
   git clone git://github.com/mozilla/mozbase.git
   cd mozbase
   python setup_development.py
   cd ..
+
   # set up mozautolog
   hg clone http://hg.mozilla.org/users/jgriffin_mozilla.com/mozautolog/
   cd mozautolog
   python setup.py develop
   cd ..
+
+  # set up gitpython
+  easy_install http://pypi.python.org/packages/source/G/GitPython/GitPython-0.3.2.RC1.tar.gz
 fi
 
 cd ../..
