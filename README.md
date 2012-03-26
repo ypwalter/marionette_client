@@ -1,6 +1,6 @@
 # Marionette Client
 
-[Marionette](https://wiki.mozilla.org/Auto-tools/Projects/Marionette) is a 
+[Marionette](https://developer.mozilla.org/en/Marionette) is a 
 Mozilla project to enable remote automation in Gecko-based projects,
 including desktop Firefox, mobile Firefox, and Boot-to-Gecko.
 
@@ -40,12 +40,8 @@ case you'll need to install the Selenium Python bindings using:
 
     pip install selenium
 
-## Writing Tests Using the Marionette Client
+## Writing and Running Tests Using Marionette
 
-Tests can be written using the Marionette client directly, or by writing
-Selenium tests and using the Selenium proxy.  See test_protocol.py for
-an example of the former and test_selenium.py for an example of the latter.
-
-Although test_selenium.py uses the Python binding for Selenium, any of the 
-Selenium webdriver clients should be usable with Marionette.
+See [Writing Marionette tests](https://developer.mozilla.org/en/Marionette/Tests),
+and [Running Marionette tests](https://developer.mozilla.org/en/Marionette/Running_Tests).
 
