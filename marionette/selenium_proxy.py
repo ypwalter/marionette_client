@@ -293,5 +293,5 @@ class SeleniumProxy(object):
         httpd.serve_forever()
 
 if __name__ == "__main__":
-    proxy = SeleniumProxy('localhost', 2626)
+    proxy = SeleniumProxy('localhost', 2828)
     proxy.start()
