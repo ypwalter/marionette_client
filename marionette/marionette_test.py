@@ -21,32 +21,8 @@ class CommonTestCase(unittest.TestCase):
         self._qemu = []
         unittest.TestCase.__init__(self, methodName)
 
-    def kill_gaia_app(self, url):
-        self.marionette.execute_script("""
-window.wrappedJSObject.getApplicationManager().kill("%s");
-return(true);
-""" % url)
-
-    def kill_gaia_apps(self):
-        # shut down any running Gaia apps
-        # XXX there's no API to do this currently
-        pass
-
     def launch_gaia_app(self, url):
-        # launch the app using Gaia's AppManager
-        self.marionette.set_script_timeout(30000)
-        frame = self.marionette.execute_async_script("""
-var frame = window.wrappedJSObject.getApplicationManager().launch("%s").element;
-window.addEventListener('message', function frameload(e) {
-    if (e.data == 'appready') {
-        window.removeEventListener('message', frameload);
-        marionetteScriptFinished(frame);
-    }
-});
-    """ % url)
-
-        self.assertTrue(isinstance(frame, HTMLElement))
-        return frame
+        raise NotImplementedError
 
     def setUp(self):
         if self.marionette.session is None:
@@ -82,7 +58,6 @@ class MarionetteJSTestCase(CommonTestCase):
 
     context_re = re.compile(r"MARIONETTE_CONTEXT(\s*)=(\s*)['|\"](.*?)['|\"];")
     timeout_re = re.compile(r"MARIONETTE_TIMEOUT(\s*)=(\s*)(\d+);")
-    launch_re = re.compile(r"MARIONETTE_LAUNCH_APP(\s*)=(\s*)['|\"](.*?)['|\"];")
 
     def __init__(self, marionette, methodName='runTest', jsFile=None):
         assert(jsFile)
@@ -120,19 +95,10 @@ class MarionetteJSTestCase(CommonTestCase):
             timeout = timeout.group(3)
             self.marionette.set_script_timeout(timeout)
 
-        launch_app = self.launch_re.search(js)
-        if launch_app:
-            launch_app = launch_app.group(3)
-            frame = self.launch_gaia_app(launch_app)
-            args.append({'__marionetteArgs': {'appframe': frame}})
-
         try:
             results = self.marionette.execute_js_script(js, args)
 
             self.loglines = self.marionette.get_logs()
-
-            if launch_app:
-                self.kill_gaia_app(launch_app)
 
             self.assertTrue(not 'timeout' in self.jsFile,
                             'expected timeout not triggered')
