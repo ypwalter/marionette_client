@@ -64,6 +64,13 @@ class TestExecuteContent(MarionetteTestCase):
         self.assertEqual(self.marionette.execute_script("return {'foo': [1, 'a', 2]};"),
                          {'foo': [1, 'a', 2]})
 
+    def test_that_we_can_pass_in_floats(self):
+        expected_result = 1.2
+        result = self.marionette.execute_script("return arguments[0]", 
+                       [expected_result])
+        self.assertTrue(isinstance(result, float))
+        self.assertEqual(result, expected_result)
+
 
 class TestExecuteChrome(TestExecuteContent):
     def setUp(self):
