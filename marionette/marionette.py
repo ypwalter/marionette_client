@@ -39,7 +39,7 @@ import socket
 from client import MarionetteClient
 from errors import *
 from emulator import Emulator
-from b2ginstance import B2GInstance
+from geckoinstance import GeckoInstance
 
 class HTMLElement(object):
 
@@ -102,12 +102,13 @@ class Marionette(object):
     CONTEXT_CHROME = 'chrome'
     CONTEXT_CONTENT = 'content'
 
-    def __init__(self, host='localhost', port=2828, b2gbin=False,
+    def __init__(self, host='localhost', port=2828, bin=None, profile=None,
                  emulator=False, connectToRunningEmulator=False,
                  homedir=None, baseurl=None, noWindow=False):
         self.host = host
         self.port = self.local_port = port
-        self.b2gbin = b2gbin
+        self.bin = bin
+        self.profile = profile
         self.session = None
         self.window = None
         self.emulator = None
@@ -115,10 +116,10 @@ class Marionette(object):
         self.baseurl = baseurl
         self.noWindow = noWindow
 
-        if b2gbin:
-            self.b2ginstance = B2GInstance(host=self.host, port=self.port, b2gbin=self.b2gbin)
-            self.b2ginstance.start()
-            assert(self.b2ginstance.wait_for_port())
+        if bin:
+            self.instance = GeckoInstance(host=self.host, port=self.port, bin=self.bin)
+            self.instance.start()
+            assert(self.instance.wait_for_port())
         if emulator:
             self.emulator = Emulator(homedir=homedir, noWindow=self.noWindow)
             self.emulator.start()
@@ -136,8 +137,8 @@ class Marionette(object):
     def __del__(self):
         if self.emulator:
             self.emulator.close()
-        if self.b2gbin:
-            self.b2ginstance.close()
+        if self.bin:
+            self.instance.close()
 
     def _send_message(self, command, response_key, **kwargs):
         if not self.session and command not in ('newSession', 'getStatus'):
