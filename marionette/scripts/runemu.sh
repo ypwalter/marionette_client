@@ -3,6 +3,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# Marionette requires Python 2.7, so the first parameter to this script
+# should be the path to that.
 PYTHON=$1
 
 if [ -z "${PYTHON}" ]
@@ -12,14 +14,18 @@ then
 fi
 
 # Determine the absolute path of our location.
-MARIONETTE_HOME=`dirname $0`
-cd $MARIONETTE_HOME
+echo $0
+echo `dirname $0`
+echo $PWD
+SCRIPTS_HOME=`dirname $0`
+cd $SCRIPTS_HOME
+cd ..
 MARIONETTE_HOME=`dirname $PWD`
 echo "Detected Marionette home in $MARIONETTE_HOME"
 
 # If a GECKO_OBJDIR environemnt variable exists, we will create the Python
 # virtual envirnoment there. Otherwise we create it in the PWD.
-VENV_DIR="marionette_venv"
+VENV_DIR="runemu_venv"
 if [ -z $GECKO_OBJDIR ]
 then
     VENV_DIR="$MARIONETTE_HOME/$VENV_DIR"
@@ -51,4 +57,6 @@ cd marionette
 
 # pop off the python parameter
 shift
-python runtests.py $@
+cd scripts
+python runemu.py $@
+
