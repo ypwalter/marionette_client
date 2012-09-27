@@ -34,11 +34,6 @@ You'll need the ManifestDestiny and MozHttpd packages from Mozbase:
     cd mozbase
     python setup_development.py
 
-You will also need Datazilla:
-
-    git clone git://github.com/mozilla/datazilla_client.git
-    python setup.py develop
-
 Other than that, there are no special requirements.
 
 

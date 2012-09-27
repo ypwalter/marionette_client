@@ -10,7 +10,7 @@ class TestText(MarionetteTestCase):
         test_html = self.marionette.absolute_url("test.html")
         self.marionette.navigate(test_html)
         l = self.marionette.find_element("id", "mozLink")
-        self.assertEqual("Click me!", l.text())
+        self.assertEqual("Click me!", l.text)
 
     def test_clearText(self):
         test_html = self.marionette.absolute_url("test.html")
@@ -33,9 +33,12 @@ class TestTextChrome(MarionetteTestCase):
         MarionetteTestCase.setUp(self)
         self.marionette.set_context("chrome")
         self.win = self.marionette.current_window_handle
-        self.marionette.execute_script("window.open('chrome://marionette/content/test.xul', '_blank', 'chrome,centerscreen');")
+        self.marionette.execute_script("window.open('chrome://marionette/content/test.xul', 'foo', 'chrome,centerscreen');")
+        self.marionette.switch_to_window('foo')
+        self.assertNotEqual(self.win, self.marionette.current_window_handle)
 
     def tearDown(self):
+        self.assertNotEqual(self.win, self.marionette.current_window_handle)
         self.marionette.execute_script("window.close();")
         self.marionette.switch_to_window(self.win)
         MarionetteTestCase.tearDown(self)
@@ -46,7 +49,7 @@ class TestTextChrome(MarionetteTestCase):
         newWin = wins.pop()
         self.marionette.switch_to_window(newWin)
         box = self.marionette.find_element("id", "textInput")
-        self.assertEqual("test", box.text())
+        self.assertEqual("test", box.text)
 
     def test_clearText(self):
         wins = self.marionette.window_handles
@@ -54,9 +57,9 @@ class TestTextChrome(MarionetteTestCase):
         newWin = wins.pop()
         self.marionette.switch_to_window(newWin)
         box = self.marionette.find_element("id", "textInput")
-        self.assertEqual("test", box.text())
+        self.assertEqual("test", box.text)
         box.clear()
-        self.assertEqual("", box.text())
+        self.assertEqual("", box.text)
 
     def test_sendKeys(self):
         wins = self.marionette.window_handles
@@ -64,6 +67,6 @@ class TestTextChrome(MarionetteTestCase):
         newWin = wins.pop()
         self.marionette.switch_to_window(newWin)
         box = self.marionette.find_element("id", "textInput")
-        self.assertEqual("test", box.text())
+        self.assertEqual("test", box.text)
         box.send_keys("at")
-        self.assertEqual("attest", box.text())
+        self.assertEqual("attest", box.text)

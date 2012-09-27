@@ -17,7 +17,6 @@ import time
 
 from emulator_battery import EmulatorBattery
 
-
 class LogcatProc(ProcessHandlerMixin):
     """Process handler for logcat which saves all output to a logfile.
     """
@@ -38,12 +37,13 @@ class Emulator(object):
     deviceRe = re.compile(r"^emulator-(\d+)(\s*)(.*)$")
 
     def __init__(self, homedir=None, noWindow=False, logcat_dir=None, arch="x86",
-                 emulatorBinary=None, res='480x800', userdata=None):
+                  emulatorBinary=None, res='480x800', sdcard=None, userdata=None):
         self.port = None
         self._emulator_launched = False
         self.proc = None
         self.marionette_port = None
         self.telnet = None
+        self._tmp_sdcard = None
         self._tmp_userdata = None
         self._adb_started = False
         self.logcat_dir = logcat_dir
@@ -53,6 +53,7 @@ class Emulator(object):
         self.res = res
         self.battery = EmulatorBattery(self)
         self.homedir = homedir
+        self.sdcard = sdcard
         self.noWindow = noWindow
         if self.homedir is not None:
             self.homedir = os.path.expanduser(homedir)
@@ -66,7 +67,7 @@ class Emulator(object):
             raise Exception('Must define B2G_HOME or pass the homedir parameter')
         self._check_file(self.homedir)
 
-        oldstyle_homedir = os.path.join(self.homedir, 'glue/gonk-ics')
+        oldstyle_homedir = os.path.join(self.homedir, 'glue','gonk-ics')
         if os.access(oldstyle_homedir, os.F_OK):
             self.homedir = oldstyle_homedir
 
@@ -78,7 +79,7 @@ class Emulator(object):
         if platform.system() == "Darwin":
             host_dir = "darwin-x86"
 
-        host_bin_dir = os.path.join("out/host", host_dir, "bin")
+        host_bin_dir = os.path.join("out","host", host_dir, "bin")
 
         if self.arch == "x86":
             binary = os.path.join(host_bin_dir, "emulator-x86")
@@ -91,9 +92,10 @@ class Emulator(object):
             sysdir = "out/target/product/generic"
             self.tail_args = ["-cpu", "cortex-a8"]
 
-        self.adb = os.path.join(self.homedir, host_bin_dir, "adb")
-        if not os.access(self.adb, os.F_OK):
-            self.adb = os.path.join(self.homedir, 'bin/adb')
+        self._check_for_adb()
+        if(self.sdcard):
+            self.mksdcard = os.path.join(self.homedir, host_bin_dir, "mksdcard")
+            self.create_sdcard(self.sdcard)
 
         if not self.binary:
             self.binary = os.path.join(self.homedir, binary)
@@ -127,6 +129,8 @@ class Emulator(object):
                       '-kernel', self.kernelImg,
                       '-sysdir', self.sysDir,
                       '-data', self.dataImg ]
+        if self._tmp_sdcard:
+            qemuArgs.extend(['-sdcard', self._tmp_sdcard])
         if self.noWindow:
             qemuArgs.append('-no-window')
         qemuArgs.extend(['-memory', '512',
@@ -143,22 +147,36 @@ class Emulator(object):
             return self.proc is not None and self.proc.poll() is None
         else:
             return self.port is not None
+ 
+    def create_sdcard(self, sdcard):
+         self._tmp_sdcard = tempfile.mktemp(prefix='sdcard')
+         sdargs = [self.mksdcard, "-l" , "mySdCard", sdcard, self._tmp_sdcard]
+         sd = subprocess.Popen(sdargs, stdout= subprocess.PIPE, stderr=subprocess.STDOUT)
+         retcode = sd.wait()
+         if retcode: 
+             raise Exception('unable to create sdcard : exit code %d: %s' 
+                              % (retcode, adb.stdout.read()))
+         return None
 
     def _check_for_adb(self):
-        self.adb = os.path.join(self.homedir,
-                                'glue/gonk/out/host/linux-x86/bin/adb')
-        if not os.access(self.adb, os.F_OK):
-            self.adb = os.path.join(self.homedir, 'bin/adb')
-            if not os.access(self.adb, os.F_OK):
-                adb = subprocess.Popen(['which', 'adb'],
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT)
-                retcode = adb.wait()
-                if retcode:
-                    raise Exception('adb not found!')
-                out = adb.stdout.read().strip()
-                if len(out) and out.find('/') > -1:
-                    self.adb = out
+        host_dir = "linux-x86"
+        if platform.system() == "Darwin":
+            host_dir = "darwin-x86"
+        adb = subprocess.Popen(['which', 'adb'],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        if adb.wait() == 0:
+            self.adb = adb.stdout.read().strip() # remove trailing newline
+            return
+        adb_paths = [os.path.join(self.homedir,'glue','gonk','out','host',
+                      host_dir ,'bin','adb'),os.path.join(self.homedir, 'out',
+                      'host', host_dir,'bin', 'adb'),os.path.join(self.homedir,
+                      'bin','adb')]
+        for option in adb_paths:
+            if os.path.exists(option):
+                self.adb = option
+                return
+        raise Exception('adb not found!')
 
     def _run_adb(self, args):
         args.insert(0, self.adb)
@@ -201,6 +219,9 @@ class Emulator(object):
             if self._tmp_userdata:
                 os.remove(self._tmp_userdata)
                 self._tmp_userdata = None
+            if self._tmp_sdcard: 
+                os.remove(self._tmp_sdcard)
+                self._tmp_sdcard = None
             return retcode
         if self.logcat_proc:
             self.logcat_proc.kill()
@@ -286,6 +307,7 @@ class Emulator(object):
     def _save_logcat_proc(self, filename, cmd):
         self.logcat_proc = LogcatProc(filename, cmd)
         self.logcat_proc.run()
+        self.logcat_proc.processOutput()
         self.logcat_proc.waitForFinish()
         self.logcat_proc = None
 
