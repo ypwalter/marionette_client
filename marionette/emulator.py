@@ -16,6 +16,7 @@ import tempfile
 import time
 
 from emulator_battery import EmulatorBattery
+from emulator_geo import EmulatorGeo
 
 class LogcatProc(ProcessHandlerMixin):
     """Process handler for logcat which saves all output to a logfile.
@@ -52,6 +53,7 @@ class Emulator(object):
         self.binary = emulatorBinary
         self.res = res
         self.battery = EmulatorBattery(self)
+        self.geo = EmulatorGeo(self)
         self.homedir = homedir
         self.sdcard = sdcard
         self.noWindow = noWindow
@@ -296,6 +298,7 @@ class Emulator(object):
             online, offline = self._get_adb_devices()
         self.port = int(list(online - original_online)[0])
         self._emulator_launched = True
+        self.geo.set_default_location()
 
         if self.logcat_dir:
             self.save_logcat()
