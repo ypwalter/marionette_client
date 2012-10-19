@@ -171,7 +171,8 @@ class MarionetteTestRunner(object):
                  bin=None, profile=None, autolog=False, revision=None,
                  es_server=None, rest_server=None, logger=None,
                  testgroup="marionette", noWindow=False, logcat_dir=None,
-                 xml_output=None, repeat=0, perf=False, perfserv=None):
+                 xml_output=None, repeat=0, perf=False, perfserv=None,
+                 gecko_path=None, testvars=None):
         self.address = address
         self.emulator = emulator
         self.emulatorBinary = emulatorBinary
@@ -196,6 +197,16 @@ class MarionetteTestRunner(object):
         self.repeat = repeat
         self.perf = perf
         self.perfserv = perfserv
+        self.gecko_path = gecko_path
+        self.testvars = None
+
+        if testvars is not None:
+            if not os.path.exists(testvars):
+                raise Exception('--testvars file does not exist')
+
+            import json
+            with open(testvars) as f:
+                self.testvars = json.loads(f.read())
 
         # set up test handlers
         self.test_handlers = []
@@ -253,7 +264,8 @@ class MarionetteTestRunner(object):
                                              connectToRunningEmulator=True,
                                              homedir=self.homedir,
                                              baseurl=self.baseurl,
-                                             logcat_dir=self.logcat_dir)
+                                             logcat_dir=self.logcat_dir,
+                                             gecko_path=self.gecko_path)
             else:
                 self.marionette = Marionette(host=host,
                                              port=int(port),
@@ -266,7 +278,8 @@ class MarionetteTestRunner(object):
                                          homedir=self.homedir,
                                          baseurl=self.baseurl,
                                          noWindow=self.noWindow,
-                                         logcat_dir=self.logcat_dir)
+                                         logcat_dir=self.logcat_dir,
+                                         gecko_path=self.gecko_path)
         else:
             raise Exception("must specify binary, address or emulator")
 
@@ -415,7 +428,7 @@ class MarionetteTestRunner(object):
 
         for handler in self.test_handlers:
             if handler.match(os.path.basename(test)):
-                handler.add_tests_to_suite(mod_name, filepath, suite, testloader, self.marionette)
+                handler.add_tests_to_suite(mod_name, filepath, suite, testloader, self.marionette, self.testvars)
                 break
 
         if suite.countTestCases():
@@ -604,7 +617,14 @@ def parse_options():
                       default=0, help='number of times to repeat the test(s).')
     parser.add_option('-x', '--xml-output', action='store', dest='xml_output',
                       help='XML output.')
- 
+    parser.add_option('--gecko-path', dest='gecko_path', action='store',
+                      default=None,
+                      help='path to B2G gecko binaries that should be '
+                      'installed on the device or emulator')
+    parser.add_option('--testvars', dest='testvars', action='store',
+                      default=None,
+                     help='path to a JSON file with any test data required')
+
     options, tests = parser.parse_args()
 
     if not tests:
@@ -653,7 +673,9 @@ def startTestRunner(runner_class, options, tests):
                           xml_output=options.xml_output,
                           repeat=options.repeat,
                           perf=options.perf,
-                          perfserv=options.perfserv)
+                          perfserv=options.perfserv,
+                          gecko_path=options.gecko_path,
+                          testvars=options.testvars)
     runner.run_tests(tests, testtype=options.type)
     return runner
 
