@@ -1,1 +1,4 @@
 *.pyc
+
+dist/
+marionette_client.egg-info
