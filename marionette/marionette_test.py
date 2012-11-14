@@ -49,6 +49,15 @@ class CommonTestCase(unittest.TestCase):
         """
         raise NotImplementedError
 
+    @property
+    def test_name(self):
+        if hasattr(self, 'jsFile'):
+            return os.path.basename(self.jsFile)
+        else:
+            return '%s.py %s.%s' % (self.__class__.__module__,
+                                    self.__class__.__name__,
+                                    self._testMethodName)
+
     def set_up_test_page(self, emulator, url="test.html", permissions=None):
         emulator.set_context("content")
         url = emulator.absolute_url(url)
@@ -112,8 +121,10 @@ class MarionetteTestCase(CommonTestCase):
                                   methodName=testname,
                                   filepath=filepath,
                                   testvars=testvars))
+
     def setUp(self):
         CommonTestCase.setUp(self)
+        self.marionette.test_name = self.test_name
         self.marionette.execute_script("log('TEST-START: %s:%s')" % 
                                        (self.filepath.replace('\\', '\\\\'), self.methodName))
 
@@ -121,6 +132,7 @@ class MarionetteTestCase(CommonTestCase):
         self.marionette.set_context("content")
         self.marionette.execute_script("log('TEST-END: %s:%s')" % 
                                        (self.filepath.replace('\\', '\\\\'), self.methodName))
+        self.marionette.test_name = None
         CommonTestCase.tearDown(self)
 
     def get_new_emulator(self):
@@ -153,23 +165,14 @@ class MarionetteJSTestCase(CommonTestCase):
         CommonTestCase.__init__(self, methodName)
 
     @classmethod
-    def add_tests_to_suite(cls, mod_name, filepath, suite, testloader, marionette):
+    def add_tests_to_suite(cls, mod_name, filepath, suite, testloader, marionette, testvars):
         suite.addTest(cls(weakref.ref(marionette), jsFile=filepath))
 
     def runTest(self):
         if self.marionette.session is None:
             self.marionette.start_session()
+        self.marionette.test_name = os.path.basename(self.jsFile)
         self.marionette.execute_script("log('TEST-START: %s');" % self.jsFile.replace('\\', '\\\\'))
-
-        self.marionette.set_context(self.marionette.CONTEXT_CHROME)
-        self.marionette.set_script_timeout(30000)
-        self.marionette.execute_async_script("""
-waitFor(
-    function() { marionetteScriptFinished(true); },
-    function() { return isSystemMessageListenerReady(); }
-);
-            """)
-        self.marionette.set_context(self.marionette.CONTEXT_CONTENT)
 
         f = open(self.jsFile, 'r')
         js = f.read()
@@ -216,7 +219,8 @@ waitFor(
                 for failure in results['failures']:
                     diag = "" if failure.get('diag') is None else "| %s " % failure['diag']
                     name = "got false, expected true" if failure.get('name') is None else failure['name']
-                    fails.append('TEST-UNEXPECTED-FAIL %s| %s' % (diag, name))
+                    fails.append('TEST-UNEXPECTED-FAIL | %s %s| %s' %
+                                 (os.path.basename(self.jsFile), diag, name))
                 self.assertEqual(0, results['failed'],
                                  '%d tests failed:\n%s' % (results['failed'], '\n'.join(fails)))
 
@@ -233,6 +237,4 @@ waitFor(
                 raise
 
         self.marionette.execute_script("log('TEST-END: %s');" % self.jsFile.replace('\\', '\\\\'))
-
-
-
+        self.marionette.test_name = None

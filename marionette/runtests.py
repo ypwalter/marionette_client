@@ -17,15 +17,8 @@ import platform
 import weakref
 import xml.dom.minidom as dom
 
-try:
-    from manifestparser import TestManifest
-    from mozhttpd import iface, MozHttpd
-except ImportError:
-    print "manifestparser or mozhttpd not found!  Please install mozbase:\n"
-    print "\tgit clone git://github.com/mozilla/mozbase.git"
-    print "\tpython setup_development.py\n"
-    import sys
-    sys.exit(1)
+from manifestparser import TestManifest
+from mozhttpd import iface, MozHttpd
 
 from marionette import Marionette
 from marionette_test import MarionetteJSTestCase, MarionetteTestCase
@@ -33,8 +26,10 @@ from marionette_test import MarionetteJSTestCase, MarionetteTestCase
 
 class MarionetteTestResult(unittest._TextTestResult):
 
-    def __init__(self, *args):
-        super(MarionetteTestResult, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        self.marionette = kwargs['marionette']
+        del kwargs['marionette']
+        super(MarionetteTestResult, self).__init__(*args, **kwargs)
         self.passed = 0
         self.perfdata = None
         self.tests_passed = []
@@ -45,12 +40,7 @@ class MarionetteTestResult(unittest._TextTestResult):
         self.tests_passed.append(test)
 
     def getInfo(self, test):
-        if hasattr(test, 'jsFile'):
-            return os.path.basename(test.jsFile)
-        else:
-            return '%s.py:%s.%s' % (test.__class__.__module__,
-                                    test.__class__.__name__,
-                                    test._testMethodName)
+        return test.test_name
 
     def getDescription(self, test):
         doc_first_line = test.shortDescription()
@@ -65,6 +55,16 @@ class MarionetteTestResult(unittest._TextTestResult):
     def printLogs(self, test):
         for testcase in test._tests:
             if hasattr(testcase, 'loglines') and testcase.loglines:
+                # Don't dump loglines to the console if they only contain
+                # TEST-START and TEST-END.
+                skip_log = True
+                for line in testcase.loglines:
+                    str_line = ' '.join(line)
+                    if not 'TEST-END' in str_line and not 'TEST-START' in str_line:
+                        skip_log = False
+                        break
+                if skip_log:
+                    return
                 self.stream.writeln('START LOG:')
                 for line in testcase.loglines:
                     self.stream.writeln(' '.join(line))
@@ -81,12 +81,22 @@ class MarionetteTestResult(unittest._TextTestResult):
     def printErrorList(self, flavour, errors):
         for test, err in errors:
             self.stream.writeln(self.separator1)
-            self.stream.writeln("%s: %s" % (flavour,self.getDescription(test)))
+            self.stream.writeln("%s: %s" % (flavour, self.getDescription(test)))
             self.stream.writeln(self.separator2)
             errlines = err.strip().split('\n')
             for line in errlines[0:-1]:
                 self.stream.writeln("%s" % line)
-            self.stream.writeln("TEST-UNEXPECTED-FAIL : %s" % errlines[-1])
+            if "TEST-UNEXPECTED-FAIL" in errlines[-1]:
+                self.stream.writeln(errlines[-1])
+            else:
+                self.stream.writeln("TEST-UNEXPECTED-FAIL | %s | %s" %
+                                    (self.getInfo(test), errlines[-1]))
+
+    def stopTest(self, *args, **kwargs):
+        unittest._TextTestResult.stopTest(self, *args, **kwargs)
+        if self.marionette.check_for_crash():
+            # this tells unittest.TestSuite not to continue running tests
+            self.shouldStop = True
 
 
 class MarionetteTextTestRunner(unittest.TextTestRunner):
@@ -96,10 +106,15 @@ class MarionetteTextTestRunner(unittest.TextTestRunner):
     def __init__(self, **kwargs):
         self.perf = kwargs['perf']
         del kwargs['perf']
+        self.marionette = kwargs['marionette']
+        del kwargs['marionette']
         unittest.TextTestRunner.__init__(self, **kwargs)
 
     def _makeResult(self):
-        return self.resultclass(self.stream, self.descriptions, self.verbosity)
+        return self.resultclass(self.stream,
+                                self.descriptions,
+                                self.verbosity,
+                                marionette=self.marionette)
 
     def run(self, test):
         "Run the given test case or test suite."
@@ -172,7 +187,7 @@ class MarionetteTestRunner(object):
                  es_server=None, rest_server=None, logger=None,
                  testgroup="marionette", noWindow=False, logcat_dir=None,
                  xml_output=None, repeat=0, perf=False, perfserv=None,
-                 gecko_path=None, testvars=None):
+                 gecko_path=None, testvars=None, tree=None):
         self.address = address
         self.emulator = emulator
         self.emulatorBinary = emulatorBinary
@@ -199,6 +214,7 @@ class MarionetteTestRunner(object):
         self.perfserv = perfserv
         self.gecko_path = gecko_path
         self.testvars = None
+        self.tree = tree
 
         if testvars is not None:
             if not os.path.exists(testvars):
@@ -307,7 +323,7 @@ class MarionetteTestRunner(object):
             logfile = logfile)
 
         testgroup.set_primary_product(
-            tree = 'b2g',
+            tree = self.tree,
             buildtype = 'opt',
             revision = self.revision)
 
@@ -359,7 +375,7 @@ class MarionetteTestRunner(object):
         if not self.httpd:
             print "starting httpd"
             self.start_httpd()
-        
+
         if not self.marionette:
             self.start_marionette()
 
@@ -372,6 +388,8 @@ class MarionetteTestRunner(object):
                         (filename.endswith('.py') or filename.endswith('.js'))):
                         filepath = os.path.join(root, filename)
                         self.run_test(filepath, testtype)
+                        if self.marionette.check_for_crash():
+                            return
             return
 
         mod_name,file_ext = os.path.splitext(os.path.split(filepath)[-1])
@@ -380,7 +398,7 @@ class MarionetteTestRunner(object):
         suite = unittest.TestSuite()
 
         if file_ext == '.ini':
-            testargs = { 'skip': 'false' }
+            testargs = {}
             if testtype is not None:
                 testtypes = testtype.replace('+', ' +').replace('-', ' -').split()
                 for atype in testtypes:
@@ -418,10 +436,12 @@ class MarionetteTestRunner(object):
                              id=os.getenv('BUILD_ID'),
                              test_date=int(time.time()))
 
-            manifest_tests = manifest.get(**testargs)
+            manifest_tests = manifest.active_tests(disabled=False)
 
-            for i in manifest_tests:
+            for i in manifest.get(tests=manifest_tests, **testargs):
                 self.run_test(i["path"], testtype)
+                if self.marionette.check_for_crash():
+                    return
             return
 
         self.logger.info('TEST-START %s' % os.path.basename(test))
@@ -432,7 +452,10 @@ class MarionetteTestRunner(object):
                 break
 
         if suite.countTestCases():
-            results = MarionetteTextTestRunner(verbosity=3, perf=self.perf).run(suite)
+            runner = MarionetteTextTestRunner(verbosity=3,
+                                              perf=self.perf,
+                                              marionette=self.marionette)
+            results = runner.run(suite)
             self.results.append(results)
 
             self.failed += len(results.failures) + len(results.errors)
@@ -623,7 +646,10 @@ def parse_options():
                       'installed on the device or emulator')
     parser.add_option('--testvars', dest='testvars', action='store',
                       default=None,
-                     help='path to a JSON file with any test data required')
+                      help='path to a JSON file with any test data required')
+    parser.add_option('--tree', dest='tree', action='store',
+                      default='b2g',
+                      help='the tree that the revsion parameter refers to')
 
     options, tests = parser.parse_args()
 
@@ -669,6 +695,7 @@ def startTestRunner(runner_class, options, tests):
                           noWindow=options.noWindow,
                           revision=options.revision,
                           testgroup=options.testgroup,
+                          tree=options.tree,
                           autolog=options.autolog,
                           xml_output=options.xml_output,
                           repeat=options.repeat,
