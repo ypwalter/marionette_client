@@ -337,11 +337,11 @@ class Marionette(object):
         self.window = window_id
         return response
 
-    def switch_to_frame(self, frame=None):
+    def switch_to_frame(self, frame=None, focus=True):
         if isinstance(frame, HTMLElement):
             response = self._send_message('switchToFrame', 'ok', element=frame.id)
         else:
-            response = self._send_message('switchToFrame', 'ok', value=frame)
+            response = self._send_message('switchToFrame', 'ok', value=frame, focus=focus)
         return response
 
     def get_url(self):
